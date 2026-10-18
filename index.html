@@ -64,7 +64,7 @@ async function signupGPS() {
   authMsg('Criando conta...', true);
   const { data, error } = await supabaseClient.auth.signUp({
     email, password,
-    options: { emailRedirectTo: 'https://luannpaullo88-dot.github.io/gps-do-edital/' }
+    options: { emailRedirectTo: window.location.href }
   });
   if (error) return authMsg('Erro ao criar conta: ' + error.message);
   if (data.session) await updateAuthUI();
@@ -72,6 +72,7 @@ async function signupGPS() {
 }
 async function logoutGPS() {
   await supabaseClient.auth.signOut();
+  data = {examName:'',examDate:'',subjects:[],questionLogs:[],studyHistory:[]};
   await updateAuthUI();
 }
 async function updateAuthUI() {
@@ -79,8 +80,16 @@ async function updateAuthUI() {
   const auth = document.getElementById('authScreen');
   const app = document.getElementById('appContent');
   if (!auth || !app) return;
-  auth.style.display = session ? 'none' : 'flex';
-  app.style.display = session ? 'block' : 'none';
+  
+  if (session) {
+    auth.style.display = 'none';
+    app.style.display = 'block';
+    await loadUserData(session.user.id);
+  } else {
+    auth.style.display = 'flex';
+    app.style.display = 'none';
+  }
+
   const header = document.querySelector('header');
   if (session && header && !document.getElementById('gpsUserBar')) {
     const bar = document.createElement('div');
@@ -279,21 +288,57 @@ Raciocínio Lógico — Proposições"></textarea>
 })();
 </script>
 <script>
-const KEY='gps_edital_v6';
-let data=JSON.parse(localStorage.getItem(KEY)||'null')||{examName:'',examDate:'',subjects:[],questionLogs:[],studyHistory:[]};
+let data = {examName:'',examDate:'',subjects:[],questionLogs:[],studyHistory:[]};
 
-data.subjects.forEach(s=>{
- if(!s.reviewDates)s.reviewDates=['','',''];
- if(!s.reviewDone)s.reviewDone=[false,false,false];
- if(!s.classification)s.classification='';
- if(!s.notes)s.notes='';
- if(!s.questions)s.questions={total:0,correct:0};
- if(!s.studyDate)s.studyDate='';
-});
-if(!data.questionLogs)data.questionLogs=[];
-if(!data.studyHistory)data.studyHistory=[];
+async function loadUserData(userId) {
+  const { data: cloudData, error } = await supabaseClient
+    .from('user_settings')
+    .select('payload')
+    .eq('user_id', userId)
+    .maybeSingle();
 
-function save(){localStorage.setItem(KEY,JSON.stringify(data));render()}
+  if (cloudData && cloudData.payload) {
+    data = cloudData.payload;
+  } else {
+    data = {examName:'',examDate:'',subjects:[],questionLogs:[],studyHistory:[]};
+    await saveToCloud();
+  }
+  normalizeData();
+  render();
+}
+
+async function saveToCloud() {
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if (!session) return;
+  
+  const userId = session.user.id;
+  const payload = data;
+
+  await supabaseClient
+    .from('user_settings')
+    .upsert({ user_id: userId, payload: payload, updated_at: new Date() }, { onConflict: 'user_id' });
+}
+
+function normalizeData() {
+  if(!data.subjects) data.subjects=[];
+  data.subjects.forEach(s=>{
+   if(!s.reviewDates)s.reviewDates=['','',''];
+   if(!s.reviewDone)s.reviewDone=[false,false,false];
+   if(!s.classification)s.classification='';
+   if(!s.notes)s.notes='';
+   if(!s.questions)s.questions={total:0,correct:0};
+   if(!s.studyDate)s.studyDate='';
+  });
+  if(!data.questionLogs)data.questionLogs=[];
+  if(!data.studyHistory)data.studyHistory=[];
+}
+
+function save(){
+  normalizeData();
+  saveToCloud();
+  render();
+}
+
 function today(){return new Date().toISOString().slice(0,10)}
 function addDays(dateString,days){const d=new Date(dateString+'T00:00:00');d.setDate(d.getDate()+days);return d.toISOString().slice(0,10)}
 function formatDate(x){if(!x)return'';const [y,m,d]=x.split('-');return d+'/'+m+'/'+y}
@@ -302,7 +347,7 @@ function escAttr(x){return esc(x)}
 function daysLeft(){if(!data.examDate)return null;const a=new Date();a.setHours(0,0,0,0);const b=new Date(data.examDate+'T00:00:00');return Math.ceil((b-a)/86400000)}
 function isDue(s){return(s.reviewDates||[]).some((d,i)=>d&&d<=today()&&!(s.reviewDone||[])[i])}
 function scheduleReviews(i,base){data.subjects[i].reviewDates=[addDays(base,7),addDays(base,21),addDays(base,42)];data.subjects[i].reviewDone=[false,false,false]}
-function saveSettings(){data.examName=document.getElementById('examName').value.trim();data.examDate=document.getElementById('examDate').value;save();alert('Configurações salvas.')}
+function saveSettings(){data.examName=document.getElementById('examName').value.trim();data.examDate=document.getElementById('examDate').value;save();alert('Configurações salvas e sincronizadas.')}
 function parseLine(line){let parts=line.trim().split(/\s+[—–-]\s+/);if(parts.length>=2)return{discipline:parts.shift().trim(),topic:parts.join(' — ').trim()};return{discipline:'Geral',topic:line.trim()}}
 function addSubject(d,t){if(!data.subjects.some(s=>s.discipline.toLowerCase()===d.toLowerCase()&&s.topic.toLowerCase()===t.toLowerCase()))data.subjects.push({discipline:d,topic:t,status:'pendente',reviewDates:['','',''],reviewDone:[false,false,false],classification:'',notes:'',questions:{total:0,correct:0},studyDate:''})}
 function addBulk(){const lines=document.getElementById('bulkInput').value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);if(!lines.length){alert('Cole os assuntos primeiro.');return}let a=0,d=0;lines.forEach(l=>{const x=parseLine(l),n=data.subjects.length;addSubject(x.discipline,x.topic);data.subjects.length>n?a++:d++});document.getElementById('bulkInput').value='';save();alert(`Importação concluída!\n\nAdicionados: ${a}\nJá existentes: ${d}`)}
@@ -325,7 +370,7 @@ function addQuestions(){
 function removeQuestion(i){data.questionLogs.splice(i,1);save()}
 function exportData(){const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='backup-gps-edital-'+today()+'.json';a.click();URL.revokeObjectURL(a.href)}
 function importData(e){const file=e.target.files[0];if(!file)return;const r=new FileReader();r.onload=()=>{try{const x=JSON.parse(r.result);if(!x.subjects)throw Error();data=x;save();alert('Backup importado com sucesso.')}catch{alert('Arquivo de backup inválido.')}};r.readAsText(file)}
-function clearAll(){if(confirm('Tem certeza? Isso apagará todo o edital, questões e histórico deste navegador.')){localStorage.removeItem(KEY);location.reload()}}
+function clearAll(){if(confirm('Tem certeza? Isso apagará todo o edital, questões e histórico desta conta.')){data={examName:'',examDate:'',subjects:[],questionLogs:[],studyHistory:[]};save();location.reload()}}
 
 function render(){
  document.getElementById('examName').value=data.examName||'';document.getElementById('examDate').value=data.examDate||'';
@@ -382,7 +427,6 @@ function renderTable(){
  rows.forEach(s=>{const qp=questionPct(s);h+=`<tr id="row-${s.i}"><td>${s.i+1}</td><td><b>${esc(s.discipline)}</b></td><td>${esc(s.topic)}${s.studyDate?`<div class="history">Estudado em ${formatDate(s.studyDate)}</div>`:''}</td><td><select onchange="setStatus(${s.i},this.value)"><option value="pendente" ${s.status==='pendente'?'selected':''}>🔴 Não estudado</option><option value="estudando" ${s.status==='estudando'?'selected':''}>🔵 Estudando</option><option value="estudado" ${s.status==='estudado'?'selected':''}>🟢 Estudado</option></select></td><td><div class="review-box"><label class="review-item">R1 <input type="date" value="${(s.reviewDates||[])[0]||''}" onchange="setReview(${s.i},0,this.value)"><input type="checkbox" ${(s.reviewDone||[])[0]?'checked':''} onchange="setReviewDone(${s.i},0,this.checked)"></label><label class="review-item">R2 <input type="date" value="${(s.reviewDates||[])[1]||''}" onchange="setReview(${s.i},1,this.value)"><input type="checkbox" ${(s.reviewDone||[])[1]?'checked':''} onchange="setReviewDone(${s.i},1,this.checked)"></label><label class="review-item">R3 <input type="date" value="${(s.reviewDates||[])[2]||''}" onchange="setReview(${s.i},2,this.value)"><input type="checkbox" ${(s.reviewDone||[])[2]?'checked':''} onchange="setReviewDone(${s.i},2,this.checked)"></label></div></td><td><select class="obs-select ${classificationClass(s.classification)}" onchange="setClassification(${s.i},this.value);this.className='obs-select '+classificationClass(this.value)"><option value="" ${!s.classification?'selected':''}>Classificação</option><option value="dominio" ${s.classification==='dominio'?'selected':''}>🟢 Domínio</option><option value="revisar" ${s.classification==='revisar'?'selected':''}>🟡 Revisar</option><option value="fraco" ${s.classification==='fraco'?'selected':''}>🔴 Fraco</option></select><input style="margin-top:4px;font-size:11px;padding:6px" value="${escAttr(s.notes)}" placeholder="Observação opcional" onchange="setNotes(${s.i},this.value)"></td><td>${s.questions.total?`${s.questions.correct}/${s.questions.total}<br><b>${qp}%</b>`:'—'}</td><td><button class="btn danger" onclick="removeSubject(${s.i})">🗑 Excluir</button></td></tr>`});
  h+='</tbody></table>';document.getElementById('tableWrap').innerHTML=h
 }
-render();
 </script>
 </body>
 </html>
