@@ -33,6 +33,71 @@ details summary{cursor:pointer;font-weight:700}.modal-note{background:#f7faff;bo
 @media(max-width:700px){.tabs-nav-gps{overflow-x:auto;flex-wrap:nowrap}.tab-btn-gps{white-space:nowrap;font-size:12px;padding:8px 10px}}
 
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+/* Use somente a Publishable key. Nunca coloque a Secret key neste arquivo público. */
+const SUPABASE_URL = 'https://dkzcsxobbzzaejfvcbip.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_e-OO9UW4FstmuOjSpLHdbQ_YuNMFgP-';
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+function authMsg(message, success=false) {
+  const el = document.getElementById('authMessage');
+  if (!el) return;
+  el.textContent = message;
+  el.style.color = success ? '#15803d' : '#b91c1c';
+}
+async function loginGPS() {
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  if (!email || !password) return authMsg('Informe seu e-mail e sua senha.');
+  authMsg('Entrando...', true);
+  const { error } = await supabaseClient.auth.signInWithPassword({email, password});
+  if (error) return authMsg('Erro ao entrar: ' + error.message);
+  await updateAuthUI();
+}
+async function signupGPS() {
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  if (!email || !password) return authMsg('Informe seu e-mail e uma senha.');
+  if (password.length < 6) return authMsg('A senha precisa ter pelo menos 6 caracteres.');
+  authMsg('Criando conta...', true);
+  const { data, error } = await supabaseClient.auth.signUp({
+    email, password,
+    options: { emailRedirectTo: 'https://luannpaullo88-dot.github.io/gps-do-edital/' }
+  });
+  if (error) return authMsg('Erro ao criar conta: ' + error.message);
+  if (data.session) await updateAuthUI();
+  else authMsg('Conta criada. Confira seu e-mail para confirmar o cadastro e depois entre.', true);
+}
+async function logoutGPS() {
+  await supabaseClient.auth.signOut();
+  await updateAuthUI();
+}
+async function updateAuthUI() {
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  const auth = document.getElementById('authScreen');
+  const app = document.getElementById('appContent');
+  if (!auth || !app) return;
+  auth.style.display = session ? 'none' : 'flex';
+  app.style.display = session ? 'block' : 'none';
+  const header = document.querySelector('header');
+  if (session && header && !document.getElementById('gpsUserBar')) {
+    const bar = document.createElement('div');
+    bar.id = 'gpsUserBar';
+    bar.style.cssText = 'margin-top:10px;font-size:13px;';
+    const user = document.createElement('span');
+    user.textContent = '👤 ' + (session.user.email || 'Usuário');
+    const btn = document.createElement('button');
+    btn.type = 'button'; btn.textContent = 'Sair'; btn.style.marginLeft = '10px';
+    btn.onclick = logoutGPS;
+    bar.append(user, btn); header.appendChild(bar);
+  } else if (!session) document.getElementById('gpsUserBar')?.remove();
+}
+supabaseClient.auth.onAuthStateChange(() => setTimeout(updateAuthUI, 0));
+document.addEventListener('DOMContentLoaded', updateAuthUI);
+</script>
+
 </head>
 <body>
 <header>
@@ -40,6 +105,27 @@ details summary{cursor:pointer;font-weight:700}.modal-note{background:#f7faff;bo
 <p>Seu edital, revisões, questões, desempenho e prioridades em um só lugar.</p>
 </header>
 
+
+<div id="authScreen" style="min-height:70vh;display:flex;align-items:center;justify-content:center;padding:30px 18px;">
+  <div class="card" style="width:min(440px,100%);">
+    <h2 style="margin-bottom:6px;">🔐 Entrar no GPS do Edital</h2>
+    <p style="margin-top:0;">Entre com sua conta para acessar seus estudos.</p>
+    <div style="margin-bottom:10px;">
+      <label for="authEmail">E-mail</label>
+      <input id="authEmail" type="email" autocomplete="email" placeholder="seuemail@exemplo.com" style="width:100%;box-sizing:border-box;">
+    </div>
+    <div style="margin-bottom:12px;">
+      <label for="authPassword">Senha</label>
+      <input id="authPassword" type="password" autocomplete="current-password" placeholder="Mínimo de 6 caracteres" style="width:100%;box-sizing:border-box;">
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button type="button" onclick="loginGPS()">Entrar</button>
+      <button type="button" onclick="signupGPS()">Criar conta</button>
+    </div>
+    <p id="authMessage" style="margin:12px 0 0;font-size:14px;"></p>
+  </div>
+</div>
+<div id="appContent" style="display:none;">
 <div class="container">
 
 <div class="grid">
@@ -142,6 +228,8 @@ Raciocínio Lógico — Proposições"></textarea>
 <div class="actions" style="margin-top:10px"><button class="btn green" onclick="addBulk()">➕ Adicionar todos os assuntos</button><button class="btn light" onclick="document.getElementById('bulkInput').value=''">Limpar campo</button></div>
 </div>
 </div>
+</div>
+
 
 
 <script>
