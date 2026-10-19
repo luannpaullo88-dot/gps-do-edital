@@ -36,7 +36,6 @@ details summary{cursor:pointer;font-weight:700}.modal-note{background:#f7faff;bo
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-/* Use somente a Publishable key. Nunca coloque a Secret key neste arquivo público. */
 const SUPABASE_URL = 'https://dkzcsxobbzzaejfvcbip.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_e-OO9UW4FstmuOjSpLHdbQ_YuNMFgP-';
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
@@ -314,9 +313,16 @@ async function saveToCloud() {
   const userId = session.user.id;
   const payload = data;
 
-  await supabaseClient
+  const { error } = await supabaseClient
     .from('user_settings')
-    .upsert({ user_id: userId, payload: payload, updated_at: new Date() }, { onConflict: 'user_id' });
+    .upsert(
+      { user_id: userId, payload: payload, updated_at: new Date().toISOString() },
+      { onConflict: 'user_id' }
+    );
+
+  if (error) {
+    console.error('Erro ao salvar na nuvem:', error);
+  }
 }
 
 function normalizeData() {
