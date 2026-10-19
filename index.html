@@ -441,7 +441,19 @@ function setClassification(i,v){data.subjects[i].classification=v;save()}
 function setNotes(i,v){data.subjects[i].notes=v;save()}
 function classificationClass(v){return v==='dominio'?'obs-dominio':v==='revisar'?'obs-revisar':v==='fraco'?'obs-fraco':''}
 function removeSubject(i){if(confirm('Excluir este assunto?')){data.subjects.splice(i,1);save()}}
-function focusRow(i){document.getElementById('filter').value=data.subjects[i].topic;document.getElementById('statusFilter').value='todos';document.getElementById('classFilter').value='todos';render();setTimeout(()=>document.getElementById('row-'+i)?.scrollIntoView({behavior:'smooth',block:'center'}),50)}
+function focusRow(i){
+ const filter=document.getElementById('filter');
+ if(filter) filter.value=data.subjects[i].topic;
+ document.getElementById('statusFilter').value='todos';
+ document.getElementById('classFilter').value='todos';
+ render();
+ // A tabela completa do edital corresponde à aba de índice 8.
+ if(typeof window.openGpsTab==='function') window.openGpsTab('gps-tab-8');
+ setTimeout(()=>{
+  const row=document.getElementById('row-'+i);
+  if(row) row.scrollIntoView({behavior:'smooth',block:'center'});
+ },150);
+}
 
 function questionPct(s){return s.questions.total?Math.round(s.questions.correct/s.questions.total*100):null}
 function addQuestions(){
