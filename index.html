@@ -102,10 +102,13 @@ async function updateAuthUI() {
       currentUserId = null;
       cloudReady = false;
       cloudLoadingUserId = null;
+      gpsIsMaster = false;
+      gpsSignedInUserId = null;
+      document.getElementById('gpsMasterUserSelector')?.remove();
     }
   }
-  if (session && typeof loadCloudData === 'function') {
-    await loadCloudData(session.user.id);
+  if (session && typeof setupMasterControls === 'function') {
+    await setupMasterControls(session);
   }
 }
 supabaseClient.auth.onAuthStateChange(() => setTimeout(updateAuthUI, 0));
@@ -323,9 +326,42 @@ function setCloudStatus(message, isError=false){
  const el=document.getElementById('gpsSyncStatus');
  if(el){el.textContent=message;el.style.color=isError?'#fecaca':'#d7e1f4';}
 }
+let gpsIsMaster=false;
+let gpsSignedInUserId=null;
+let gpsMasterProfiles=[];
+async function setupMasterControls(session){
+ gpsSignedInUserId=session.user.id;
+ const {data:profile,error}=await supabaseClient.from('user_profiles').select('role').eq('user_id',session.user.id).maybeSingle();
+ if(error){console.error('Não foi possível verificar o perfil:',error);await loadCloudData(session.user.id);return;}
+ gpsIsMaster=profile?.role==='master';
+ const bar=document.getElementById('gpsUserBar');
+ if(!bar){await loadCloudData(session.user.id);return;}
+ let selector=document.getElementById('gpsMasterUserSelector');
+ if(!gpsIsMaster){selector?.remove();await loadCloudData(session.user.id);return;}
+ const {data:profiles,error:profilesError}=await supabaseClient.from('user_profiles').select('user_id,email,role').order('email');
+ if(profilesError){console.error('Não foi possível listar perfis:',profilesError);setCloudStatus('⚠️ Erro ao listar perfis',true);await loadCloudData(session.user.id);return;}
+ gpsMasterProfiles=profiles||[];
+ if(!selector){
+  selector=document.createElement('select');selector.id='gpsMasterUserSelector';
+  selector.setAttribute('aria-label','Selecionar perfil para administrar');
+  selector.style.cssText='display:inline-block;width:auto;max-width:min(320px,90vw);margin:8px 0 0 12px;padding:7px;border-radius:8px;';
+  selector.addEventListener('change',()=>loadCloudData(selector.value));
+  bar.appendChild(selector);
+ }
+ const previous=selector.value||session.user.id;
+ selector.innerHTML='';
+ gpsMasterProfiles.forEach(item=>{
+  const option=document.createElement('option');option.value=item.user_id;
+  option.textContent=(item.email||item.user_id)+(item.role==='master'?' (Mestre)':'');
+  selector.appendChild(option);
+ });
+ selector.value=gpsMasterProfiles.some(item=>item.user_id===previous)?previous:session.user.id;
+ await loadCloudData(selector.value||session.user.id);
+}
 async function loadCloudData(userId){
  if(cloudReady && currentUserId===userId)return;
  if(cloudLoadingUserId===userId)return;
+ clearTimeout(cloudSaveTimer);
  cloudLoadingUserId=userId;
  cloudReady=false;
  currentUserId=userId;
