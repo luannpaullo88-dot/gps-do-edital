@@ -14,107 +14,102 @@ input,textarea,select,button{font:inherit}input,textarea,select{width:100%;paddi
 button{border:0;border-radius:9px;padding:10px 14px;cursor:pointer;font-weight:600}.btn{background:var(--primary);color:#fff}.btn.light{background:#eef3fb;color:#18345f}.btn.danger{background:#fff0f0;color:var(--red);border:1px solid #f1c8c8}.btn.green{background:var(--green);color:#fff}
 .actions{display:flex;gap:7px;flex-wrap:wrap}.progress{height:9px;background:#e7ecf3;border-radius:20px;overflow:hidden}.progress span{display:block;height:100%;background:var(--primary)}
 table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:middle}th{font-size:11px;color:var(--muted);text-transform:uppercase}
-.badge{display:inline-block;padding:5px 9px;border-radius:20px;font-size:12px;font-weight:700}.b-pendente{background:#fff3d6;color:#8a5a00}.b-estudando{background:#e7f0ff;color:#185adb}.b-estudado{background:#e4f7eb;color:#167642}.b-revisar{background:#f0e9ff;color:#6b36a8}
 .empty{padding:22px;text-align:center;color:var(--muted);border:1px dashed #cbd5e1;border-radius:10px}.small{font-size:12px}.highlight{border-left:4px solid var(--primary)}
 .today-group{margin-bottom:18px}.today-title{font-size:16px;margin:0 0 8px}.priority-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.priority-item{padding:11px;border:1px solid var(--line);border-radius:10px;background:#fff}.priority-item b{display:block;margin-bottom:4px}.review-box{display:flex;gap:4px;align-items:center;flex-wrap:wrap;min-width:205px}.review-item{display:flex;align-items:center;gap:3px;font-size:11px;white-space:nowrap}.review-item input[type=date]{width:105px;padding:5px;font-size:11px}.review-item input[type=checkbox]{margin:0;width:auto}
 .obs-select{width:105px;padding:6px 7px;font-size:12px;font-weight:700;border-radius:8px}.obs-dominio{background:#e4f7eb!important;color:#167642!important;border-color:#9bd2ad!important}.obs-revisar{background:#fff3d6!important;color:#8a5a00!important;border-color:#e5c477!important}.obs-fraco{background:#ffe5e5!important;color:#b42318!important;border-color:#e3a4a4!important}
-.mini{font-size:11px;color:var(--muted)}.history{font-size:11px;line-height:1.55}.barline{display:flex;align-items:center;gap:8px}.barline .progress{flex:1}.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.metric{border:1px solid var(--line);border-radius:10px;padding:12px}.metric strong{font-size:22px;display:block}.danger-text{color:var(--red);font-weight:700}.warn-text{color:var(--yellow);font-weight:700}.good-text{color:var(--green);font-weight:700}
-details summary{cursor:pointer;font-weight:700}.modal-note{background:#f7faff;border-left:4px solid var(--primary);padding:10px;margin-bottom:10px}
+.history{font-size:11px;line-height:1.55}.barline{display:flex;align-items:center;gap:8px}.barline .progress{flex:1}.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.metric{border:1px solid var(--line);border-radius:10px;padding:12px}.metric strong{font-size:22px;display:block}.danger-text{color:var(--red);font-weight:700}
 @media(max-width:1000px){.grid,.metric-grid{grid-template-columns:repeat(2,1fr)}.priority-grid{grid-template-columns:1fr}table{display:block;overflow:auto;white-space:nowrap}}
 @media(max-width:600px){.grid,.metric-grid{grid-template-columns:1fr}header h1{font-size:22px}}
-
-/* ===== MODO ABAS HORIZONTAIS ===== */
 .tabs-nav-gps{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 12px;position:sticky;top:0;z-index:50;padding:8px 0;background:#f5f7fb}
 .tab-btn-gps{border:1px solid #d8dee9;background:#fff;color:#334155;border-radius:10px;padding:9px 13px;font-weight:700;cursor:pointer;transition:.2s}
 .tab-btn-gps:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.08)}
 .tab-btn-gps.active{background:#2563eb;color:#fff;border-color:#2563eb}
-.gps-tab-panel{display:none!important}
-.gps-tab-panel.active{display:block!important}
+.gps-tab-panel{display:none!important}.gps-tab-panel.active{display:block!important}
 @media(max-width:700px){.tabs-nav-gps{overflow-x:auto;flex-wrap:nowrap}.tab-btn-gps{white-space:nowrap;font-size:12px;padding:8px 10px}}
-
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
 /* Use somente a Publishable key. Nunca coloque a Secret key neste arquivo público. */
-const SUPABASE_URL = 'https://dkzcsxobbzzaejfvcbip.supabase.co';
-const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_e-OO9UW4FstmuOjSpLHdbQ_YuNMFgP-';
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+const SUPABASE_URL='https://dkzcsxobbzzaejfvcbip.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY='sb_publishable_e-OO9UW4FstmuOjSpLHdbQ_YuNMFgP-';
+const SITE_URL='https://luannpaullo88-dot.github.io/gps-do-edital/';
+const LS_KEY='gps_edital_v6';
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+let gpsLastUid=null;
 
-function authMsg(message, success=false) {
-  const el = document.getElementById('authMessage');
-  if (!el) return;
-  el.textContent = message;
-  el.style.color = success ? '#15803d' : '#b91c1c';
+function authMsg(message,success=false){
+  const el=document.getElementById('authMessage');if(!el)return;
+  el.textContent=message;el.style.color=success?'#15803d':'#b91c1c';
 }
-async function loginGPS() {
-  const email = document.getElementById('authEmail').value.trim();
-  const password = document.getElementById('authPassword').value;
-  if (!email || !password) return authMsg('Informe seu e-mail e sua senha.');
-  authMsg('Entrando...', true);
-  const { error } = await supabaseClient.auth.signInWithPassword({email, password});
-  if (error) return authMsg('Erro ao entrar: ' + error.message);
+async function loginGPS(){
+  const email=document.getElementById('authEmail').value.trim();
+  const password=document.getElementById('authPassword').value;
+  if(!email||!password)return authMsg('Informe seu e-mail e sua senha.');
+  authMsg('Entrando...',true);
+  const {error}=await supabaseClient.auth.signInWithPassword({email,password});
+  if(error)return authMsg('Erro ao entrar: '+error.message);
   await updateAuthUI();
 }
-async function signupGPS() {
-  const email = document.getElementById('authEmail').value.trim();
-  const password = document.getElementById('authPassword').value;
-  if (!email || !password) return authMsg('Informe seu e-mail e uma senha.');
-  if (password.length < 6) return authMsg('A senha precisa ter pelo menos 6 caracteres.');
-  authMsg('Criando conta...', true);
-  const { data, error } = await supabaseClient.auth.signUp({
-    email, password,
-    options: { emailRedirectTo: 'https://luannpaullo88-dot.github.io/gps-do-edital/' }
-  });
-  if (error) return authMsg('Erro ao criar conta: ' + error.message);
-  if (data.session) await updateAuthUI();
-  else authMsg('Conta criada. Confira seu e-mail para confirmar o cadastro e depois entre.', true);
+async function signupGPS(){
+  const email=document.getElementById('authEmail').value.trim();
+  const password=document.getElementById('authPassword').value;
+  if(!email||!password)return authMsg('Informe seu e-mail e uma senha.');
+  if(password.length<6)return authMsg('A senha precisa ter pelo menos 6 caracteres.');
+  authMsg('Criando conta...',true);
+  const {data,error}=await supabaseClient.auth.signUp({email,password,options:{emailRedirectTo:SITE_URL}});
+  if(error)return authMsg('Erro ao criar conta: '+error.message);
+  if(data.session)await updateAuthUI();
+  else authMsg('Conta criada. Confira seu e-mail para confirmar o cadastro e depois entre.',true);
 }
-async function logoutGPS() {
+async function resetGPS(){
+  const email=document.getElementById('authEmail').value.trim();
+  if(!email)return authMsg('Digite seu e-mail para recuperar a senha.');
+  const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo:SITE_URL});
+  if(error)return authMsg('Erro: '+error.message);
+  authMsg('Enviamos um link de recuperação para o seu e-mail.',true);
+}
+async function logoutGPS(){
+  try{if(typeof flushSave==='function')await flushSave()}catch(e){}
   await supabaseClient.auth.signOut();
   await updateAuthUI();
 }
-async function updateAuthUI() {
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  const auth = document.getElementById('authScreen');
-  const app = document.getElementById('appContent');
-  if (!auth || !app) return;
-  auth.style.display = session ? 'none' : 'flex';
-  app.style.display = session ? 'block' : 'none';
-  const header = document.querySelector('header');
-  if (session && header && !document.getElementById('gpsUserBar')) {
-    const bar = document.createElement('div');
-    bar.id = 'gpsUserBar';
-    bar.style.cssText = 'margin-top:10px;font-size:13px;';
-    const user = document.createElement('span');
-    user.textContent = '👤 ' + (session.user.email || 'Usuário');
-    const sync = document.createElement('span');
-    sync.id = 'gpsSyncStatus';
-    sync.textContent = '☁️ Conectando dados...';
-    sync.style.cssText = 'display:inline-block;margin-left:12px;color:#d7e1f4;';
-    const btn = document.createElement('button');
-    btn.type = 'button'; btn.textContent = 'Sair'; btn.style.marginLeft = '10px';
-    btn.onclick = logoutGPS;
-    bar.append(user, sync, btn); header.appendChild(bar);
-  } else if (!session) {
+async function updateAuthUI(){
+  const {data:{session}}=await supabaseClient.auth.getSession();
+  const auth=document.getElementById('authScreen'),app=document.getElementById('appContent');
+  if(!auth||!app)return;
+  auth.style.display=session?'none':'flex';
+  app.style.display=session?'block':'none';
+  const header=document.querySelector('header');
+  if(session&&header&&!document.getElementById('gpsUserBar')){
+    const bar=document.createElement('div');bar.id='gpsUserBar';bar.style.cssText='margin-top:10px;font-size:13px;';
+    const user=document.createElement('span');user.textContent='👤 '+(session.user.email||'Usuário');
+    const sync=document.createElement('span');sync.id='gpsSyncStatus';sync.textContent='☁️ Conectando dados...';
+    sync.style.cssText='display:inline-block;margin-left:12px;color:#d7e1f4;';
+    const btn=document.createElement('button');btn.type='button';btn.textContent='Sair';btn.style.marginLeft='10px';btn.onclick=logoutGPS;
+    bar.append(user,sync,btn);header.appendChild(bar);
+  }else if(!session){
     document.getElementById('gpsUserBar')?.remove();
-    if (typeof currentUserId !== 'undefined') {
-      currentUserId = null;
-      cloudReady = false;
-      cloudLoadingUserId = null;
-      gpsIsMaster = false;
-      gpsSignedInUserId = null;
-      document.getElementById('gpsMasterUserSelector')?.remove();
-    }
+    document.getElementById('gpsMasterUserSelector')?.remove();
+    gpsLastUid=null;
+    try{localStorage.removeItem(LS_KEY)}catch(e){}
+    if(typeof resetSessionState==='function')resetSessionState();
   }
-  if (session && typeof setupMasterControls === 'function') {
+  if(session&&typeof setupMasterControls==='function'&&gpsLastUid!==session.user.id){
+    gpsLastUid=session.user.id;
     await setupMasterControls(session);
   }
 }
-supabaseClient.auth.onAuthStateChange(() => setTimeout(updateAuthUI, 0));
-document.addEventListener('DOMContentLoaded', updateAuthUI);
+supabaseClient.auth.onAuthStateChange(event=>{
+  if(event==='PASSWORD_RECOVERY'){
+    setTimeout(async()=>{
+      const p=prompt('Digite sua nova senha (mínimo 6 caracteres):');
+      if(p&&p.length>=6){const {error}=await supabaseClient.auth.updateUser({password:p});alert(error?'Erro: '+error.message:'Senha alterada com sucesso.')}
+    },300);
+  }
+  setTimeout(updateAuthUI,0);
+});
+document.addEventListener('DOMContentLoaded',updateAuthUI);
 </script>
-
 </head>
 <body>
 <header>
@@ -122,26 +117,21 @@ document.addEventListener('DOMContentLoaded', updateAuthUI);
 <p>Seu edital, revisões, questões, desempenho e prioridades em um só lugar.</p>
 </header>
 
-
 <div id="authScreen" style="min-height:70vh;display:flex;align-items:center;justify-content:center;padding:30px 18px;">
   <div class="card" style="width:min(440px,100%);">
     <h2 style="margin-bottom:6px;">🔐 Entrar no GPS do Edital</h2>
     <p style="margin-top:0;">Entre com sua conta para acessar seus estudos.</p>
-    <div style="margin-bottom:10px;">
-      <label for="authEmail">E-mail</label>
-      <input id="authEmail" type="email" autocomplete="email" placeholder="seuemail@exemplo.com" style="width:100%;box-sizing:border-box;">
-    </div>
-    <div style="margin-bottom:12px;">
-      <label for="authPassword">Senha</label>
-      <input id="authPassword" type="password" autocomplete="current-password" placeholder="Mínimo de 6 caracteres" style="width:100%;box-sizing:border-box;">
-    </div>
+    <div style="margin-bottom:10px;"><label for="authEmail">E-mail</label><input id="authEmail" type="email" autocomplete="email" placeholder="seuemail@exemplo.com"></div>
+    <div style="margin-bottom:12px;"><label for="authPassword">Senha</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="Mínimo de 6 caracteres"></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      <button type="button" onclick="loginGPS()">Entrar</button>
-      <button type="button" onclick="signupGPS()">Criar conta</button>
+      <button type="button" class="btn" onclick="loginGPS()">Entrar</button>
+      <button type="button" class="btn light" onclick="signupGPS()">Criar conta</button>
+      <button type="button" class="btn light" onclick="resetGPS()">Esqueci minha senha</button>
     </div>
     <p id="authMessage" style="margin:12px 0 0;font-size:14px;"></p>
   </div>
 </div>
+
 <div id="appContent" style="display:none;">
 <div class="container">
 
@@ -152,7 +142,7 @@ document.addEventListener('DOMContentLoaded', updateAuthUI);
 <div class="card stat"><span class="muted">📝 Questões</span><b id="questionAccuracy">0%</b><span class="muted" id="questionLabel">0 feitas</span></div>
 </div>
 
-<div class="section card">
+<div class="section card" data-tab="config">
 <h2>⚙️ Configuração da prova</h2>
 <div class="row">
 <div class="field"><label class="small">Nome do concurso</label><input id="examName" placeholder="Ex.: PMSE CFP 2026"></div>
@@ -161,20 +151,18 @@ document.addEventListener('DOMContentLoaded', updateAuthUI);
 </div>
 </div>
 
-
-
-<div class="section card">
+<div class="section card" data-tab="agora">
 <h2>🎯 O que fazer agora</h2>
 <div id="priorityPanel"></div>
 </div>
 
-<div class="section card">
+<div class="section card" data-tab="estudar">
 <h2>📚 O que estudar agora</h2>
 <p class="muted">A ordem é automática: primeiro revisões de hoje/vencidas; depois assuntos que ainda não foram vistos.</p>
 <div id="todayList"></div>
 </div>
 
-<div class="section card">
+<div class="section card" data-tab="resumo">
 <h2>📊 Resumo do seu desempenho</h2>
 <div class="metric-grid">
 <div class="metric"><span class="muted">Assuntos estudados</span><strong id="mStudied">0</strong></div>
@@ -184,17 +172,17 @@ document.addEventListener('DOMContentLoaded', updateAuthUI);
 </div>
 </div>
 
-<div class="section card">
+<div class="section card" data-tab="semana">
 <h2>📈 Evolução dos últimos 7 dias</h2>
 <div id="weekly"></div>
 </div>
 
-<div class="section card">
+<div class="section card" data-tab="disc">
 <h2>📚 Resumo por disciplina</h2>
 <div id="disciplineSummary"></div>
 </div>
 
-<div class="section card">
+<div class="section card" data-tab="quest">
 <h2>📝 Controle de questões</h2>
 <p class="muted">Registre suas questões por assunto. O percentual ajuda a identificar automaticamente onde você precisa melhorar.</p>
 <div class="row">
@@ -206,13 +194,13 @@ document.addEventListener('DOMContentLoaded', updateAuthUI);
 <div id="questionSummary" style="margin-top:14px"></div>
 </div>
 
-<div class="section card">
+<div class="section card" data-tab="crit">
 <h2>⚠️ Assuntos críticos</h2>
 <p class="muted">Aqui aparecem automaticamente assuntos fracos, com baixo desempenho em questões ou com revisões atrasadas.</p>
 <div id="criticalList"></div>
 </div>
 
-<div class="section card">
+<div class="section card" data-tab="edital">
 <h2>📋 Verticalização completa do edital</h2>
 <div class="row" style="margin-bottom:14px">
 <div class="field"><input id="filter" placeholder="🔎 Buscar disciplina ou assunto..." oninput="render()"></div>
@@ -222,19 +210,19 @@ document.addEventListener('DOMContentLoaded', updateAuthUI);
 <div id="tableWrap"></div>
 </div>
 
-<div class="section card">
+<div class="section card" data-tab="backup">
 <h2>💾 Backup</h2>
-<p class="muted">Exporte seus dados para um arquivo. Se trocar de computador ou perder os dados do navegador, importe o arquivo novamente.</p>
+<p class="muted">Exporte seus dados para um arquivo. Importar substitui os dados do perfil atual.</p>
 <div class="actions"><button class="btn green" onclick="exportData()">💾 Exportar meus dados</button><label class="btn light" style="display:inline-block">📂 Importar meus dados<input type="file" id="importFile" accept=".json" onchange="importData(event)" style="display:none"></label></div>
 </div>
 
-<div class="section card">
+<div class="section card" data-tab="dados">
 <h2>🗑️ Gerenciar dados</h2>
-<button class="btn danger" onclick="clearAll()">Apagar todos os assuntos e dados</button>
+<p class="muted">Apaga os dados <b>somente do perfil atualmente selecionado</b> (no perfil mestre, o que estiver marcado no seletor do topo). Outros perfis não são afetados.</p>
+<button class="btn danger" onclick="clearAll()">Apagar todos os assuntos e dados deste perfil</button>
 </div>
 
-
-<div class="section card highlight">
+<div class="section card highlight" data-tab="add">
 <h2>📥 Adicionar o edital inteiro de uma vez</h2>
 <p class="muted">Cole os assuntos do edital, um por linha. Use <b>Disciplina — Assunto</b> para separar automaticamente.</p>
 <textarea id="bulkInput" placeholder="Língua Portuguesa — Interpretação de textos
@@ -247,41 +235,25 @@ Raciocínio Lógico — Proposições"></textarea>
 </div>
 </div>
 
-
-
 <script>
 (function(){
-  const tabTitles=[
-    '⚙️ Configuração da prova','🎯 O que fazer agora','📚 O que estudar agora',
-    '📊 Resumo do seu desempenho','📈 Evolução dos últimos 7 dias','📚 Resumo por disciplina',
-    '📝 Controle de questões','⚠️ Assuntos críticos','📋 Verticalização completa do edital',
-    '💾 Backup','📥 Adicionar o edital inteiro de uma vez','🗑️ Gerenciar dados'
-  ];
+  const TABS=[['config','⚙️ Configuração da prova'],['agora','🎯 O que fazer agora'],['estudar','📚 O que estudar agora'],['resumo','📊 Resumo do seu desempenho'],['semana','📈 Evolução dos últimos 7 dias'],['disc','📚 Resumo por disciplina'],['quest','📝 Controle de questões'],['crit','⚠️ Assuntos críticos'],['edital','📋 Verticalização completa do edital'],['backup','💾 Backup'],['add','📥 Adicionar o edital inteiro de uma vez'],['dados','🗑️ Gerenciar dados']];
   function initTabs(){
     const container=document.querySelector('.container');
-    if(!container || container.querySelector('.tabs-nav-gps')) return;
+    if(!container||container.querySelector('.tabs-nav-gps'))return;
     const sections=[];
-    tabTitles.forEach((title,i)=>{
-      const h=[...container.querySelectorAll('h2')].find(x=>x.textContent.trim()===title);
-      if(!h) return;
-      let el=h.parentElement;
-      while(el && el.parentElement!==container) el=el.parentElement;
-      if(!el) return;
-      el.classList.add('gps-tab-panel');
-      el.id='gps-tab-'+i;
-      sections.push({i,title,el});
+    TABS.forEach(([k,title])=>{
+      const el=container.querySelector('[data-tab="'+k+'"]');
+      if(!el)return;
+      el.classList.add('gps-tab-panel');el.id='gps-tab-'+k;sections.push({title,el});
     });
-    if(!sections.length) return;
-    const nav=document.createElement('div');
-    nav.className='tabs-nav-gps'; nav.setAttribute('role','tablist');
-    sections.forEach((x,n)=>{
-      const b=document.createElement('button');
-      b.className='tab-btn-gps'; b.textContent=x.title; b.type='button';
-      b.dataset.tab=x.el.id; b.setAttribute('role','tab');
-      b.onclick=()=>openTab(x.el.id);
-      nav.appendChild(b);
+    if(!sections.length)return;
+    const nav=document.createElement('div');nav.className='tabs-nav-gps';nav.setAttribute('role','tablist');
+    sections.forEach(x=>{
+      const b=document.createElement('button');b.className='tab-btn-gps';b.textContent=x.title;b.type='button';
+      b.dataset.tab=x.el.id;b.setAttribute('role','tab');b.onclick=()=>openTab(x.el.id);nav.appendChild(b);
     });
-    container.insertBefore(nav,sections[0].el);
+    container.insertBefore(nav,container.querySelector('[data-tab]'));
     function openTab(id){
       sections.forEach(x=>x.el.classList.toggle('active',x.el.id===id));
       [...nav.children].forEach(b=>b.classList.toggle('active',b.dataset.tab===id));
@@ -289,238 +261,305 @@ Raciocínio Lógico — Proposições"></textarea>
       window.scrollTo({top:0,behavior:'smooth'});
     }
     window.openGpsTab=openTab;
-    const saved=localStorage.getItem('gps_active_tab');
+    let saved=null;try{saved=localStorage.getItem('gps_active_tab')}catch(e){}
     openTab(sections.some(x=>x.el.id===saved)?saved:sections[0].el.id);
   }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',initTabs); else initTabs();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initTabs);else initTabs();
 })();
 </script>
 <script>
-const KEY='gps_edital_v6';
-const EMPTY_DATA={examName:'',examDate:'',subjects:[],questionLogs:[],studyHistory:[]};
-let data=JSON.parse(localStorage.getItem(KEY)||'null')||JSON.parse(JSON.stringify(EMPTY_DATA));
-let currentUserId=null;
-let cloudReady=false;
-let cloudLoadingUserId=null;
-let cloudSaveTimer=null;
-let cloudSaving=false;
+const KEY=LS_KEY;
+const DRE=/^\d{4}-\d{2}-\d{2}$/;
+const STATUSES=['pendente','estudando','estudado'],CLASSES=['','dominio','revisar','fraco'];
+const vd=v=>(typeof v==='string'&&DRE.test(v))?v:'';
+const num=v=>{v=Math.floor(Number(v));return Number.isFinite(v)&&v>0?v:0};
+function newId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
+function emptyData(){return{examName:'',examDate:'',subjects:[],questionLogs:[],studyHistory:[]}}
 
 function normalizeStudyData(value){
- const x=(value && typeof value==='object')?value:{};
- if(!Array.isArray(x.subjects))x.subjects=[];
- if(!Array.isArray(x.questionLogs))x.questionLogs=[];
- if(!Array.isArray(x.studyHistory))x.studyHistory=[];
- if(typeof x.examName!=='string')x.examName='';
- if(typeof x.examDate!=='string')x.examDate='';
- x.subjects.forEach(s=>{
-  if(!s.reviewDates)s.reviewDates=['','',''];
-  if(!s.reviewDone)s.reviewDone=[false,false,false];
-  if(!s.classification)s.classification='';
-  if(!s.notes)s.notes='';
-  if(!s.questions)s.questions={total:0,correct:0};
-  if(!s.studyDate)s.studyDate='';
+ const x=(value&&typeof value==='object')?value:{};
+ const out=emptyData();
+ out.examName=typeof x.examName==='string'?x.examName:'';
+ out.examDate=vd(x.examDate);
+ const used=new Set(),ids=[];
+ (Array.isArray(x.subjects)?x.subjects:[]).forEach(s=>{
+  if(!s||typeof s!=='object'){ids.push(null);return}
+  let id=String(s.id||'').replace(/[^\w-]/g,'');
+  if(!id||used.has(id))id=newId();
+  used.add(id);ids.push(id);
+  const q=s.questions||{},t=num(q.total),rd=Array.isArray(s.reviewDates)?s.reviewDates:[],rn=Array.isArray(s.reviewDone)?s.reviewDone:[];
+  out.subjects.push({id,discipline:String(s.discipline??'Geral'),topic:String(s.topic??''),status:STATUSES.includes(s.status)?s.status:'pendente',
+   reviewDates:[0,1,2].map(n=>vd(rd[n])),reviewDone:[0,1,2].map(n=>!!rn[n]),classification:CLASSES.includes(s.classification)?s.classification:'',
+   notes:String(s.notes??''),questions:{total:t,correct:Math.min(num(q.correct),t)},studyDate:vd(s.studyDate)});
  });
- return x;
+ // Dados antigos referenciavam o assunto pelo índice; aqui convertemos para id.
+ const idOf=r=>typeof r==='number'?ids[r]:String(r||'');
+ const valid=new Set(out.subjects.map(s=>s.id));
+ (Array.isArray(x.questionLogs)?x.questionLogs:[]).forEach(r=>{
+  if(!r)return;const sid=idOf(r.subject),t=num(r.total);
+  if(!sid||!valid.has(sid)||!t)return;
+  out.questionLogs.push({date:vd(r.date),subject:sid,total:t,correct:Math.min(num(r.correct),t)});
+ });
+ (Array.isArray(x.studyHistory)?x.studyHistory:[]).forEach(r=>{
+  if(!r)return;const sid=idOf(r.subject);
+  if(!sid||!valid.has(sid)||!vd(r.date))return;
+  out.studyHistory.push({date:r.date,subject:sid});
+ });
+ return out;
 }
-function setCloudStatus(message, isError=false){
+
+let data;
+try{data=normalizeStudyData(JSON.parse(localStorage.getItem(KEY)||'null'))}catch(e){data=emptyData()}
+let currentUserId=null,cloudReady=false,cloudLoadingUserId=null,cloudSaveTimer=null,cloudSaving=false,pendingSave=false,dirty=false;
+let gpsIsMaster=false,gpsSignedInUserId=null,gpsMasterProfiles=[];
+
+function resetSessionState(){
+ clearTimeout(cloudSaveTimer);currentUserId=null;cloudReady=false;cloudLoadingUserId=null;
+ gpsIsMaster=false;gpsSignedInUserId=null;dirty=false;pendingSave=false;data=emptyData();
+}
+function setCloudStatus(message,isError=false){
  const el=document.getElementById('gpsSyncStatus');
- if(el){el.textContent=message;el.style.color=isError?'#fecaca':'#d7e1f4';}
+ if(el){el.textContent=message;el.style.color=isError?'#fecaca':'#d7e1f4'}
 }
-let gpsIsMaster=false;
-let gpsSignedInUserId=null;
-let gpsMasterProfiles=[];
 async function setupMasterControls(session){
  gpsSignedInUserId=session.user.id;
  const {data:profile,error}=await supabaseClient.from('user_profiles').select('role').eq('user_id',session.user.id).maybeSingle();
- if(error){console.error('Não foi possível verificar o perfil:',error);await loadCloudData(session.user.id);return;}
+ if(error){console.error('Não foi possível verificar o perfil:',error);await loadCloudData(session.user.id);return}
  gpsIsMaster=profile?.role==='master';
  const bar=document.getElementById('gpsUserBar');
- if(!bar){await loadCloudData(session.user.id);return;}
+ if(!bar){await loadCloudData(session.user.id);return}
  let selector=document.getElementById('gpsMasterUserSelector');
- if(!gpsIsMaster){selector?.remove();await loadCloudData(session.user.id);return;}
- const {data:profiles,error:profilesError}=await supabaseClient.from('user_profiles').select('user_id,email,role').order('email');
- if(profilesError){console.error('Não foi possível listar perfis:',profilesError);setCloudStatus('⚠️ Erro ao listar perfis',true);await loadCloudData(session.user.id);return;}
+ if(!gpsIsMaster){selector?.remove();await loadCloudData(session.user.id);return}
+ const {data:profiles,error:pe}=await supabaseClient.from('user_profiles').select('user_id,email,role').order('email');
+ if(pe){console.error('Não foi possível listar perfis:',pe);setCloudStatus('⚠️ Erro ao listar perfis',true);await loadCloudData(session.user.id);return}
  gpsMasterProfiles=profiles||[];
  if(!selector){
   selector=document.createElement('select');selector.id='gpsMasterUserSelector';
   selector.setAttribute('aria-label','Selecionar perfil para administrar');
   selector.style.cssText='display:inline-block;width:auto;max-width:min(320px,90vw);margin:8px 0 0 12px;padding:7px;border-radius:8px;';
-  selector.addEventListener('change',()=>loadCloudData(selector.value));
+  selector.addEventListener('change',async()=>{const v=selector.value;await flushSave();loadCloudData(v)});
   bar.appendChild(selector);
  }
  const previous=selector.value||session.user.id;
  selector.innerHTML='';
  gpsMasterProfiles.forEach(item=>{
-  const option=document.createElement('option');option.value=item.user_id;
-  option.textContent=(item.email||item.user_id)+(item.role==='master'?' (Mestre)':'');
-  selector.appendChild(option);
+  const o=document.createElement('option');o.value=item.user_id;
+  o.textContent=(item.email||item.user_id)+(item.role==='master'?' (Mestre)':'');selector.appendChild(o);
  });
- selector.value=gpsMasterProfiles.some(item=>item.user_id===previous)?previous:session.user.id;
+ selector.value=gpsMasterProfiles.some(i=>i.user_id===previous)?previous:session.user.id;
  await loadCloudData(selector.value||session.user.id);
 }
 async function loadCloudData(userId){
- if(cloudReady && currentUserId===userId)return;
+ if(cloudReady&&currentUserId===userId)return;
  if(cloudLoadingUserId===userId)return;
  clearTimeout(cloudSaveTimer);
- cloudLoadingUserId=userId;
- cloudReady=false;
- currentUserId=userId;
+ cloudLoadingUserId=userId;cloudReady=false;currentUserId=userId;dirty=false;
  setCloudStatus('☁️ Carregando dados...');
  try{
   const {data:row,error}=await supabaseClient.from('user_study_data').select('payload').eq('user_id',userId).maybeSingle();
   if(error)throw error;
-  if(row && row.payload){
-   data=normalizeStudyData(row.payload);
-   localStorage.setItem(KEY,JSON.stringify(data));
-  }else{
-   // Conta sem dados: começa vazia para não misturar dados locais entre usuários.
-   data=JSON.parse(JSON.stringify(EMPTY_DATA));
-   const {error:insertError}=await supabaseClient.from('user_study_data').insert({user_id:userId,payload:data});
-   if(insertError)throw insertError;
-   localStorage.setItem(KEY,JSON.stringify(data));
+  if(row&&row.payload){data=normalizeStudyData(row.payload)}
+  else{
+   data=emptyData();
+   const {error:ie}=await supabaseClient.from('user_study_data').insert({user_id:userId,payload:data});
+   if(ie)throw ie;
   }
-  cloudReady=true;
-  render();
-  setCloudStatus('☁️ Dados sincronizados');
+  localStorage.setItem(KEY,JSON.stringify(data));
+  cloudReady=true;render();setCloudStatus('☁️ Dados sincronizados');
  }catch(error){
-  cloudReady=false;
-  setCloudStatus('⚠️ Falha ao sincronizar',true);
+  cloudReady=false;setCloudStatus('⚠️ Falha ao sincronizar',true);
   console.error('Erro ao carregar dados do Supabase:',error);
   alert('O login funcionou, mas não foi possível carregar os dados de estudo. Confira se criou a tabela user_study_data e as políticas RLS no Supabase. Detalhe: '+(error.message||error));
- }finally{cloudLoadingUserId=null;}
+ }finally{cloudLoadingUserId=null}
 }
 async function saveCloudData(){
- if(!cloudReady || !currentUserId || cloudSaving)return;
- cloudSaving=true;
+ if(!cloudReady||!currentUserId)return;
+ if(cloudSaving){pendingSave=true;return}
+ cloudSaving=true;dirty=false;
+ const uid=currentUserId;
  setCloudStatus('☁️ Salvando...');
  try{
-  const {error}=await supabaseClient.from('user_study_data').upsert({user_id:currentUserId,payload:data,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+  const {error}=await supabaseClient.from('user_study_data').upsert({user_id:uid,payload:data,updated_at:new Date().toISOString()},{onConflict:'user_id'});
   if(error)throw error;
   setCloudStatus('☁️ Dados sincronizados');
  }catch(error){
-  setCloudStatus('⚠️ Erro ao salvar',true);
-  console.error('Erro ao salvar dados no Supabase:',error);
- }finally{cloudSaving=false;}
+  dirty=true;setCloudStatus('⚠️ Erro ao salvar',true);console.error('Erro ao salvar dados no Supabase:',error);
+ }finally{
+  cloudSaving=false;
+  if(pendingSave){pendingSave=false;saveCloudData()}
+ }
 }
 function scheduleCloudSave(){
- if(!cloudReady || !currentUserId)return;
- clearTimeout(cloudSaveTimer);
- cloudSaveTimer=setTimeout(saveCloudData,500);
+ if(!cloudReady||!currentUserId)return;
+ dirty=true;clearTimeout(cloudSaveTimer);cloudSaveTimer=setTimeout(saveCloudData,500);
 }
-
-data=normalizeStudyData(data);
-
-data.subjects.forEach(s=>{
- if(!s.reviewDates)s.reviewDates=['','',''];
- if(!s.reviewDone)s.reviewDone=[false,false,false];
- if(!s.classification)s.classification='';
- if(!s.notes)s.notes='';
- if(!s.questions)s.questions={total:0,correct:0};
- if(!s.studyDate)s.studyDate='';
-});
-if(!data.questionLogs)data.questionLogs=[];
-if(!data.studyHistory)data.studyHistory=[];
+async function flushSave(){
+ clearTimeout(cloudSaveTimer);
+ if(dirty)await saveCloudData();
+ while(cloudSaving)await new Promise(r=>setTimeout(r,50));
+}
+window.addEventListener('beforeunload',()=>{if(dirty)saveCloudData()});
 
 function save(){localStorage.setItem(KEY,JSON.stringify(data));render();scheduleCloudSave()}
-function today(){return new Date().toISOString().slice(0,10)}
-function addDays(dateString,days){const d=new Date(dateString+'T00:00:00');d.setDate(d.getDate()+days);return d.toISOString().slice(0,10)}
-function formatDate(x){if(!x)return'';const [y,m,d]=x.split('-');return d+'/'+m+'/'+y}
+function localISO(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function today(){return localISO(new Date())}
+function addDays(ds,n){const d=new Date(ds+'T00:00:00');d.setDate(d.getDate()+n);return localISO(d)}
+function formatDate(x){if(!vd(x))return'';const [y,m,d]=x.split('-');return d+'/'+m+'/'+y}
 function esc(x){return String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function escAttr(x){return esc(x)}
-function daysLeft(){if(!data.examDate)return null;const a=new Date();a.setHours(0,0,0,0);const b=new Date(data.examDate+'T00:00:00');return Math.ceil((b-a)/86400000)}
+function byId(id){return data.subjects.find(s=>s.id===id)}
+function daysLeft(){if(!data.examDate)return null;const a=new Date();a.setHours(0,0,0,0);return Math.ceil((new Date(data.examDate+'T00:00:00')-a)/86400000)}
 function isDue(s){return(s.reviewDates||[]).some((d,i)=>d&&d<=today()&&!(s.reviewDone||[])[i])}
 function scheduleReviews(i,base){data.subjects[i].reviewDates=[addDays(base,7),addDays(base,21),addDays(base,42)];data.subjects[i].reviewDone=[false,false,false]}
-function saveSettings(){data.examName=document.getElementById('examName').value.trim();data.examDate=document.getElementById('examDate').value;save();alert('Configurações salvas.')}
-function parseLine(line){let parts=line.trim().split(/\s+[—–-]\s+/);if(parts.length>=2)return{discipline:parts.shift().trim(),topic:parts.join(' — ').trim()};return{discipline:'Geral',topic:line.trim()}}
-function addSubject(d,t){if(!data.subjects.some(s=>s.discipline.toLowerCase()===d.toLowerCase()&&s.topic.toLowerCase()===t.toLowerCase()))data.subjects.push({discipline:d,topic:t,status:'pendente',reviewDates:['','',''],reviewDone:[false,false,false],classification:'',notes:'',questions:{total:0,correct:0},studyDate:''})}
+function saveSettings(){data.examName=document.getElementById('examName').value.trim();data.examDate=vd(document.getElementById('examDate').value);save();alert('Configurações salvas.')}
+function parseLine(line){const p=line.trim().split(/\s+[—–-]\s+/);if(p.length>=2)return{discipline:p.shift().trim(),topic:p.join(' — ').trim()};return{discipline:'Geral',topic:line.trim()}}
+function addSubject(d,t){if(!data.subjects.some(s=>s.discipline.toLowerCase()===d.toLowerCase()&&s.topic.toLowerCase()===t.toLowerCase()))data.subjects.push({id:newId(),discipline:d,topic:t,status:'pendente',reviewDates:['','',''],reviewDone:[false,false,false],classification:'',notes:'',questions:{total:0,correct:0},studyDate:''})}
 function addBulk(){const lines=document.getElementById('bulkInput').value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);if(!lines.length){alert('Cole os assuntos primeiro.');return}let a=0,d=0;lines.forEach(l=>{const x=parseLine(l),n=data.subjects.length;addSubject(x.discipline,x.topic);data.subjects.length>n?a++:d++});document.getElementById('bulkInput').value='';save();alert(`Importação concluída!\n\nAdicionados: ${a}\nJá existentes: ${d}`)}
-function setStatus(i,status){const s=data.subjects[i];s.status=status;if(status==='estudado'&&!s.studyDate){s.studyDate=today();scheduleReviews(i,today());data.studyHistory.push({date:today(),subject:i})}if(status!=='estudado'&&s.studyDate){s.studyDate=''}save()}
-function setReview(i,n,v){data.subjects[i].reviewDates[n]=v;save()}
-function setReviewDone(i,n,v){data.subjects[i].reviewDone[n]=v;save()}
-function setClassification(i,v){data.subjects[i].classification=v;save()}
+function setStatus(i,status){
+ const s=data.subjects[i];s.status=status;
+ if(status==='estudado'&&!s.studyDate){
+  s.studyDate=today();scheduleReviews(i,s.studyDate);
+  if(!data.studyHistory.some(h=>h.subject===s.id))data.studyHistory.push({date:s.studyDate,subject:s.id});
+ }
+ if(status!=='estudado'&&s.studyDate){
+  data.studyHistory=data.studyHistory.filter(h=>!(h.subject===s.id&&h.date===s.studyDate));
+  s.studyDate='';s.reviewDates=['','',''];s.reviewDone=[false,false,false];
+ }
+ save();
+}
+function setReview(i,n,v){data.subjects[i].reviewDates[n]=vd(v);save()}
+function setReviewDone(i,n,v){data.subjects[i].reviewDone[n]=!!v;save()}
+function setClassification(i,v){data.subjects[i].classification=CLASSES.includes(v)?v:'';save()}
 function setNotes(i,v){data.subjects[i].notes=v;save()}
 function classificationClass(v){return v==='dominio'?'obs-dominio':v==='revisar'?'obs-revisar':v==='fraco'?'obs-fraco':''}
-function removeSubject(i){if(confirm('Excluir este assunto?')){data.subjects.splice(i,1);save()}}
-function focusRow(i){
- const filter=document.getElementById('filter');
- if(filter) filter.value=data.subjects[i].topic;
- document.getElementById('statusFilter').value='todos';
- document.getElementById('classFilter').value='todos';
- render();
- // A tabela completa do edital corresponde à aba de índice 8.
- if(typeof window.openGpsTab==='function') window.openGpsTab('gps-tab-8');
- setTimeout(()=>{
-  const row=document.getElementById('row-'+i);
-  if(row) row.scrollIntoView({behavior:'smooth',block:'center'});
- },150);
+function removeSubject(i){
+ if(!confirm('Excluir este assunto (e seus registros de questões)?'))return;
+ const id=data.subjects[i].id;
+ data.subjects.splice(i,1);
+ data.questionLogs=data.questionLogs.filter(r=>r.subject!==id);
+ data.studyHistory=data.studyHistory.filter(r=>r.subject!==id);
+ save();
 }
-
+function focusRow(i){
+ const f=document.getElementById('filter');if(f)f.value=data.subjects[i].topic;
+ document.getElementById('statusFilter').value='todos';document.getElementById('classFilter').value='todos';
+ render();
+ if(typeof window.openGpsTab==='function')window.openGpsTab('gps-tab-edital');
+ setTimeout(()=>{const row=document.getElementById('row-'+i);if(row)row.scrollIntoView({behavior:'smooth',block:'center'})},150);
+}
 function questionPct(s){return s.questions.total?Math.round(s.questions.correct/s.questions.total*100):null}
 function addQuestions(){
- const i=Number(document.getElementById('qSubject').value), total=Number(document.getElementById('qTotal').value), correct=Number(document.getElementById('qCorrect').value);
- if(!Number.isFinite(i)||!total||correct<0||correct>total){alert('Preencha corretamente os dados.');return}
- const s=data.subjects[i];s.questions.total+=total;s.questions.correct+=correct;
- data.questionLogs.push({date:today(),subject:i,total,correct});document.getElementById('qTotal').value='';document.getElementById('qCorrect').value='';save()
+ if(!data.subjects.length){alert('Cadastre os assuntos do edital primeiro.');return}
+ const s=byId(document.getElementById('qSubject').value),total=Math.floor(Number(document.getElementById('qTotal').value)),correct=Math.floor(Number(document.getElementById('qCorrect').value));
+ if(!s||!(total>0)||!Number.isFinite(correct)||correct<0||correct>total){alert('Preencha corretamente os dados.');return}
+ s.questions.total+=total;s.questions.correct+=correct;
+ data.questionLogs.push({date:today(),subject:s.id,total,correct});
+ document.getElementById('qTotal').value='';document.getElementById('qCorrect').value='';save();
 }
-function removeQuestion(i){data.questionLogs.splice(i,1);save()}
+function removeQuestion(i){
+ const r=data.questionLogs[i];if(!r)return;
+ const s=byId(r.subject);
+ if(s){s.questions.total=Math.max(0,s.questions.total-r.total);s.questions.correct=Math.max(0,s.questions.correct-r.correct)}
+ data.questionLogs.splice(i,1);save();
+}
 function exportData(){const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='backup-gps-edital-'+today()+'.json';a.click();URL.revokeObjectURL(a.href)}
-function importData(e){const file=e.target.files[0];if(!file)return;const r=new FileReader();r.onload=()=>{try{const x=JSON.parse(r.result);if(!x.subjects)throw Error();data=x;save();alert('Backup importado com sucesso.')}catch{alert('Arquivo de backup inválido.')}};r.readAsText(file)}
-function clearAll(){if(confirm('Tem certeza? Isso apagará todo o edital, questões e histórico deste navegador.')){localStorage.removeItem(KEY);location.reload()}}
+function importData(e){
+ const file=e.target.files[0];if(!file)return;
+ const r=new FileReader();
+ r.onload=()=>{
+  try{
+   const x=JSON.parse(r.result);if(!x||!Array.isArray(x.subjects))throw Error();
+   if(!confirm('Importar vai SUBSTITUIR os dados do perfil atual. Continuar?'))return;
+   data=normalizeStudyData(x);save();alert('Backup importado com sucesso.');
+  }catch{alert('Arquivo de backup inválido.')}
+  e.target.value='';
+ };
+ r.readAsText(file);
+}
+async function clearAll(){
+ if(!cloudReady||!currentUserId){alert('Aguarde a sincronização terminar.');return}
+ const sel=document.getElementById('gpsMasterUserSelector');
+ const label=(sel&&sel.selectedOptions[0])?sel.selectedOptions[0].textContent:((document.querySelector('#gpsUserBar span')||{}).textContent||'este perfil').replace('👤 ','');
+ if(!confirm('Apagar TODOS os assuntos, questões e histórico do perfil:\n\n'+label+'\n\nIsso apaga também na nuvem e não pode ser desfeito. Os outros perfis não serão afetados.'))return;
+ data=emptyData();
+ localStorage.setItem(KEY,JSON.stringify(data));
+ render();
+ dirty=true;clearTimeout(cloudSaveTimer);
+ await saveCloudData();
+ while(cloudSaving)await new Promise(r=>setTimeout(r,50));
+ alert(dirty?'Os dados foram apagados aqui, mas houve erro ao salvar na nuvem. Tente novamente.':'Dados do perfil apagados com sucesso.');
+}
 
 function render(){
- document.getElementById('examName').value=data.examName||'';document.getElementById('examDate').value=data.examDate||'';
+ const en=document.getElementById('examName'),ed=document.getElementById('examDate');
+ if(document.activeElement!==en)en.value=data.examName||'';
+ if(document.activeElement!==ed)ed.value=data.examDate||'';
  const total=data.subjects.length,done=data.subjects.filter(s=>s.status==='estudado').length,pct=total?Math.round(done/total*100):0;
  document.getElementById('progressText').textContent=pct+'%';document.getElementById('progressBar').style.width=pct+'%';
- const d=daysLeft();document.getElementById('days').textContent=d===null?'—':d<0?'Prova passou':d+' dias';document.getElementById('examLabel').textContent=data.examDate?(data.examName||'Prova')+' • '+formatDate(data.examDate):'Defina a data';
+ const d=daysLeft();document.getElementById('days').textContent=d===null?'—':d<0?'Prova passou':d+' dias';
+ document.getElementById('examLabel').textContent=data.examDate?(data.examName||'Prova')+' • '+formatDate(data.examDate):'Defina a data';
  const due=data.subjects.filter(isDue).length,weak=data.subjects.filter(s=>s.classification==='fraco').length,low=data.subjects.filter(s=>questionPct(s)!==null&&questionPct(s)<60).length;
  document.getElementById('criticalCount').textContent=due+weak+low;document.getElementById('mStudied').textContent=done;document.getElementById('mWeak').textContent=weak;document.getElementById('mReviews').textContent=due;
  const qt=data.subjects.reduce((a,s)=>a+s.questions.total,0),qc=data.subjects.reduce((a,s)=>a+s.questions.correct,0),qp=qt?Math.round(qc/qt*100):0;
  document.getElementById('questionAccuracy').textContent=qp+'%';document.getElementById('questionLabel').textContent=qt+' feitas';document.getElementById('mQuestions').textContent=qt;
- renderPriority();renderToday();renderSummary();renderQuestions();renderCritical();renderTable();renderWeekly()
+ renderPriority();renderToday();renderSummary();renderQuestions();renderCritical();renderTable();renderWeekly();
 }
-
 function renderPriority(){
- const due=data.subjects.filter(isDue),weak=data.subjects.filter(s=>s.classification==='fraco'),low=data.subjects.filter(s=>questionPct(s)!==null&&questionPct(s)<60),pending=data.subjects.filter(s=>s.status==='pendente');
- const items=[];
+ const due=data.subjects.filter(isDue),weak=data.subjects.filter(s=>s.classification==='fraco'),low=data.subjects.filter(s=>questionPct(s)!==null&&questionPct(s)<60),pending=data.subjects.filter(s=>s.status==='pendente'),items=[];
  due.slice(0,3).forEach(s=>items.push({type:'🔴 Revisão',s}));
  weak.slice(0,3).forEach(s=>{if(!items.some(x=>x.s===s))items.push({type:'🔴 Fraco',s})});
  low.slice(0,3).forEach(s=>{if(!items.some(x=>x.s===s))items.push({type:'🟡 Baixo desempenho',s})});
  pending.slice(0,3).forEach(s=>{if(!items.some(x=>x.s===s))items.push({type:'📚 Não estudado',s})});
  if(!items.length){document.getElementById('priorityPanel').innerHTML='<div class="empty">🎉 Nenhuma prioridade crítica no momento.</div>';return}
- let h='<div class="priority-grid">';items.slice(0,8).forEach(x=>{const i=data.subjects.indexOf(x.s);h+=`<div class="priority-item"><b>${x.type}</b><span>${esc(x.s.discipline)} — ${esc(x.s.topic)}</span><br><button class="btn light" style="margin-top:7px;padding:6px 9px;font-size:12px" onclick="focusRow(${i})">Ver assunto</button></div>`});h+='</div>';document.getElementById('priorityPanel').innerHTML=h
+ let h='<div class="priority-grid">';
+ items.slice(0,8).forEach(x=>{const i=data.subjects.indexOf(x.s);h+=`<div class="priority-item"><b>${x.type}</b><span>${esc(x.s.discipline)} — ${esc(x.s.topic)}</span><br><button class="btn light" style="margin-top:7px;padding:6px 9px;font-size:12px" onclick="focusRow(${i})">Ver assunto</button></div>`});
+ document.getElementById('priorityPanel').innerHTML=h+'</div>';
 }
 function renderToday(){
  const due=data.subjects.filter(isDue),pending=data.subjects.filter(s=>s.status==='pendente');let h='';
- if(due.length){h+='<div class="today-group"><h3 class="today-title">🟣 Revisões de hoje / vencidas ('+due.length+')</h3><div class="actions">';due.slice(0,60).forEach(s=>{const i=data.subjects.indexOf(s),di=(s.reviewDates||[]).map((d,n)=>({d,n})).filter(x=>x.d&&x.d<=today()&&!(s.reviewDone||[])[x.n]);const label=di.map(x=>(x.n+1)+'ª '+formatDate(x.d)).join(' • ');h+=`<button class="btn light" onclick="focusRow(${i})">${esc(s.discipline)} — ${esc(s.topic)} (${label})</button>`});h+='</div></div>'}
+ if(due.length){h+='<div class="today-group"><h3 class="today-title">🟣 Revisões de hoje / vencidas ('+due.length+')</h3><div class="actions">';due.slice(0,60).forEach(s=>{const i=data.subjects.indexOf(s),label=(s.reviewDates||[]).map((d,n)=>({d,n})).filter(x=>x.d&&x.d<=today()&&!s.reviewDone[x.n]).map(x=>(x.n+1)+'ª '+formatDate(x.d)).join(' • ');h+=`<button class="btn light" onclick="focusRow(${i})">${esc(s.discipline)} — ${esc(s.topic)} (${esc(label)})</button>`});h+='</div></div>'}
  if(pending.length){h+='<div class="today-group"><h3 class="today-title">🔴 Assuntos que ainda faltam ver ('+pending.length+')</h3><div class="actions">';pending.slice(0,60).forEach(s=>{const i=data.subjects.indexOf(s);h+=`<button class="btn light" onclick="focusRow(${i})">${esc(s.discipline)} — ${esc(s.topic)}</button>`});h+='</div></div>'}
- document.getElementById('todayList').innerHTML=h||'<div class="empty">🎉 Nenhuma pendência imediata.</div>'
+ document.getElementById('todayList').innerHTML=h||'<div class="empty">🎉 Nenhuma pendência imediata.</div>';
 }
 function renderSummary(){
  const map={};data.subjects.forEach(s=>{if(!map[s.discipline])map[s.discipline]={total:0,done:0,weak:0,dom:0,rev:0,questions:0,correct:0};const v=map[s.discipline];v.total++;if(s.status==='estudado')v.done++;if(s.classification==='fraco')v.weak++;if(s.classification==='dominio')v.dom++;if(s.classification==='revisar')v.rev++;v.questions+=s.questions.total;v.correct+=s.questions.correct});
  const e=Object.entries(map);if(!e.length){document.getElementById('disciplineSummary').innerHTML='<div class="empty">Adicione o edital para ver o resumo.</div>';return}
  let h='<table><thead><tr><th>Disciplina</th><th>Assuntos</th><th>Estudados</th><th>Fracos</th><th>Domínio</th><th>Revisar</th><th>Questões</th><th>Progresso</th></tr></thead><tbody>';
- e.forEach(([n,v])=>{const p=Math.round(v.done/v.total*100),qp=v.questions?Math.round(v.correct/v.questions*100):0;h+=`<tr><td><b>${esc(n)}</b></td><td>${v.total}</td><td>${v.done}</td><td class="${v.weak?'danger-text':''}">${v.weak}</td><td>${v.dom}</td><td>${v.rev}</td><td>${v.questions} (${qp}%)</td><td>${p}%<div class="progress"><span style="width:${p}%"></span></div></td></tr>`});h+='</tbody></table>';document.getElementById('disciplineSummary').innerHTML=h
+ e.forEach(([n,v])=>{const p=Math.round(v.done/v.total*100),qp=v.questions?Math.round(v.correct/v.questions*100):0;h+=`<tr><td><b>${esc(n)}</b></td><td>${v.total}</td><td>${v.done}</td><td class="${v.weak?'danger-text':''}">${v.weak}</td><td>${v.dom}</td><td>${v.rev}</td><td>${v.questions} (${qp}%)</td><td>${p}%<div class="progress"><span style="width:${p}%"></span></div></td></tr>`});
+ document.getElementById('disciplineSummary').innerHTML=h+'</tbody></table>';
 }
 function renderQuestions(){
- const sel=document.getElementById('qSubject');const current=sel.value;sel.innerHTML=data.subjects.map((s,i)=>`<option value="${i}">${esc(s.discipline)} — ${esc(s.topic)}</option>`).join('');if(current)sel.value=current;
- const rows=data.questionLogs.slice(-15).reverse();let h='<h3 style="margin:0 0 8px">Últimos registros</h3>';if(!rows.length)h+='<div class="empty">Nenhum registro de questões ainda.</div>';else{h+='<table><thead><tr><th>Data</th><th>Assunto</th><th>Questões</th><th>Acertos</th><th>%</th><th></th></tr></thead><tbody>';rows.forEach((r,j)=>{const s=data.subjects[r.subject],p=Math.round(r.correct/r.total*100);h+=`<tr><td>${formatDate(r.date)}</td><td>${s?esc(s.topic):'Assunto removido'}</td><td>${r.total}</td><td>${r.correct}</td><td>${p}%</td><td><button class="btn danger" onclick="removeQuestion(${data.questionLogs.indexOf(r)})">Excluir</button></td></tr>`});h+='</tbody></table>'}document.getElementById('questionSummary').innerHTML=h
+ const sel=document.getElementById('qSubject'),current=sel.value;
+ sel.innerHTML=data.subjects.map(s=>`<option value="${esc(s.id)}">${esc(s.discipline)} — ${esc(s.topic)}</option>`).join('');
+ if(current&&byId(current))sel.value=current;
+ const rows=data.questionLogs.slice(-15).reverse();let h='<h3 style="margin:0 0 8px">Últimos registros</h3>';
+ if(!rows.length)h+='<div class="empty">Nenhum registro de questões ainda.</div>';
+ else{h+='<table><thead><tr><th>Data</th><th>Assunto</th><th>Questões</th><th>Acertos</th><th>%</th><th></th></tr></thead><tbody>';
+  rows.forEach(r=>{const s=byId(r.subject),p=Math.round(r.correct/r.total*100);h+=`<tr><td>${formatDate(r.date)}</td><td>${s?esc(s.topic):'Assunto removido'}</td><td>${r.total}</td><td>${r.correct}</td><td>${p}%</td><td><button class="btn danger" onclick="removeQuestion(${data.questionLogs.indexOf(r)})">Excluir</button></td></tr>`});
+  h+='</tbody></table>'}
+ document.getElementById('questionSummary').innerHTML=h;
 }
 function renderCritical(){
  const list=data.subjects.filter(s=>s.classification==='fraco'||(questionPct(s)!==null&&questionPct(s)<60)||isDue(s));
  if(!list.length){document.getElementById('criticalList').innerHTML='<div class="empty">Nenhum assunto crítico.</div>';return}
- let h='<table><thead><tr><th>Assunto</th><th>Motivo</th><th>Desempenho</th><th></th></tr></thead><tbody>';list.slice(0,50).forEach(s=>{const i=data.subjects.indexOf(s),mot=[];if(s.classification==='fraco')mot.push('🔴 Fraco');if(questionPct(s)!==null&&questionPct(s)<60)mot.push('📝 Questões abaixo de 60%');if(isDue(s))mot.push('🔄 Revisão vencida/hoje');h+=`<tr><td><b>${esc(s.discipline)}</b><br>${esc(s.topic)}</td><td>${mot.join('<br>')}</td><td>${questionPct(s)===null?'—':questionPct(s)+'%'}</td><td><button class="btn light" onclick="focusRow(${i})">Ver</button></td></tr>`});h+='</tbody></table>';document.getElementById('criticalList').innerHTML=h
+ let h='<table><thead><tr><th>Assunto</th><th>Motivo</th><th>Desempenho</th><th></th></tr></thead><tbody>';
+ list.slice(0,50).forEach(s=>{const i=data.subjects.indexOf(s),mot=[];if(s.classification==='fraco')mot.push('🔴 Fraco');if(questionPct(s)!==null&&questionPct(s)<60)mot.push('📝 Questões abaixo de 60%');if(isDue(s))mot.push('🔄 Revisão vencida/hoje');h+=`<tr><td><b>${esc(s.discipline)}</b><br>${esc(s.topic)}</td><td>${mot.join('<br>')}</td><td>${questionPct(s)===null?'—':questionPct(s)+'%'}</td><td><button class="btn light" onclick="focusRow(${i})">Ver</button></td></tr>`});
+ document.getElementById('criticalList').innerHTML=h+'</tbody></table>';
 }
 function renderWeekly(){
- const days=[];for(let k=6;k>=0;k--){const d=new Date();d.setDate(d.getDate()-k);days.push(d.toISOString().slice(0,10))}
- const counts=days.map(d=>data.studyHistory.filter(x=>x.date===d).length);const max=Math.max(1,...counts);let h='';days.forEach((d,i)=>{h+=`<div class="barline" style="margin:7px 0"><span style="width:75px">${formatDate(d)}</span><div class="progress"><span style="width:${counts[i]/max*100}%"></span></div><b>${counts[i]}</b></div>`});h+='<p class="muted">Total nos últimos 7 dias: '+counts.reduce((a,b)=>a+b,0)+' assuntos estudados.</p>';document.getElementById('weekly').innerHTML=h
+ const days=[];for(let k=6;k>=0;k--){const d=new Date();d.setDate(d.getDate()-k);days.push(localISO(d))}
+ const counts=days.map(d=>data.studyHistory.filter(x=>x.date===d).length),max=Math.max(1,...counts);let h='';
+ days.forEach((d,i)=>{h+=`<div class="barline" style="margin:7px 0"><span style="width:75px">${formatDate(d)}</span><div class="progress"><span style="width:${counts[i]/max*100}%"></span></div><b>${counts[i]}</b></div>`});
+ document.getElementById('weekly').innerHTML=h+'<p class="muted">Total nos últimos 7 dias: '+counts.reduce((a,b)=>a+b,0)+' assuntos estudados.</p>';
 }
 function renderTable(){
  const q=(document.getElementById('filter').value||'').toLowerCase(),sf=document.getElementById('statusFilter').value,cf=document.getElementById('classFilter').value;
  const rows=data.subjects.map((s,i)=>({...s,i})).filter(s=>(sf==='todos'||s.status===sf)&&(cf==='todos'||s.classification===cf)&&((s.discipline+' '+s.topic).toLowerCase().includes(q)));
  if(!rows.length){document.getElementById('tableWrap').innerHTML='<div class="empty">Nenhum assunto encontrado.</div>';return}
+ const rv=(s,n)=>`<label class="review-item">R${n+1} <input type="date" value="${esc(s.reviewDates[n])}" onchange="setReview(${s.i},${n},this.value)"><input type="checkbox" ${s.reviewDone[n]?'checked':''} onchange="setReviewDone(${s.i},${n},this.checked)"></label>`;
  let h='<table><thead><tr><th>#</th><th>Disciplina</th><th>Assunto</th><th>Status</th><th>3 revisões</th><th>Classificação</th><th>Questões</th><th>Ação</th></tr></thead><tbody>';
- rows.forEach(s=>{const qp=questionPct(s);h+=`<tr id="row-${s.i}"><td>${s.i+1}</td><td><b>${esc(s.discipline)}</b></td><td>${esc(s.topic)}${s.studyDate?`<div class="history">Estudado em ${formatDate(s.studyDate)}</div>`:''}</td><td><select onchange="setStatus(${s.i},this.value)"><option value="pendente" ${s.status==='pendente'?'selected':''}>🔴 Não estudado</option><option value="estudando" ${s.status==='estudando'?'selected':''}>🔵 Estudando</option><option value="estudado" ${s.status==='estudado'?'selected':''}>🟢 Estudado</option></select></td><td><div class="review-box"><label class="review-item">R1 <input type="date" value="${(s.reviewDates||[])[0]||''}" onchange="setReview(${s.i},0,this.value)"><input type="checkbox" ${(s.reviewDone||[])[0]?'checked':''} onchange="setReviewDone(${s.i},0,this.checked)"></label><label class="review-item">R2 <input type="date" value="${(s.reviewDates||[])[1]||''}" onchange="setReview(${s.i},1,this.value)"><input type="checkbox" ${(s.reviewDone||[])[1]?'checked':''} onchange="setReviewDone(${s.i},1,this.checked)"></label><label class="review-item">R3 <input type="date" value="${(s.reviewDates||[])[2]||''}" onchange="setReview(${s.i},2,this.value)"><input type="checkbox" ${(s.reviewDone||[])[2]?'checked':''} onchange="setReviewDone(${s.i},2,this.checked)"></label></div></td><td><select class="obs-select ${classificationClass(s.classification)}" onchange="setClassification(${s.i},this.value);this.className='obs-select '+classificationClass(this.value)"><option value="" ${!s.classification?'selected':''}>Classificação</option><option value="dominio" ${s.classification==='dominio'?'selected':''}>🟢 Domínio</option><option value="revisar" ${s.classification==='revisar'?'selected':''}>🟡 Revisar</option><option value="fraco" ${s.classification==='fraco'?'selected':''}>🔴 Fraco</option></select><input style="margin-top:4px;font-size:11px;padding:6px" value="${escAttr(s.notes)}" placeholder="Observação opcional" onchange="setNotes(${s.i},this.value)"></td><td>${s.questions.total?`${s.questions.correct}/${s.questions.total}<br><b>${qp}%</b>`:'—'}</td><td><button class="btn danger" onclick="removeSubject(${s.i})">🗑 Excluir</button></td></tr>`});
- h+='</tbody></table>';document.getElementById('tableWrap').innerHTML=h
+ rows.forEach(s=>{const qp=questionPct(s);h+=`<tr id="row-${s.i}"><td>${s.i+1}</td><td><b>${esc(s.discipline)}</b></td><td>${esc(s.topic)}${s.studyDate?`<div class="history">Estudado em ${formatDate(s.studyDate)}</div>`:''}</td><td><select onchange="setStatus(${s.i},this.value)"><option value="pendente" ${s.status==='pendente'?'selected':''}>🔴 Não estudado</option><option value="estudando" ${s.status==='estudando'?'selected':''}>🔵 Estudando</option><option value="estudado" ${s.status==='estudado'?'selected':''}>🟢 Estudado</option></select></td><td><div class="review-box">${rv(s,0)}${rv(s,1)}${rv(s,2)}</div></td><td><select class="obs-select ${classificationClass(s.classification)}" onchange="setClassification(${s.i},this.value);this.className='obs-select '+classificationClass(this.value)"><option value="" ${!s.classification?'selected':''}>Classificação</option><option value="dominio" ${s.classification==='dominio'?'selected':''}>🟢 Domínio</option><option value="revisar" ${s.classification==='revisar'?'selected':''}>🟡 Revisar</option><option value="fraco" ${s.classification==='fraco'?'selected':''}>🔴 Fraco</option></select><input style="margin-top:4px;font-size:11px;padding:6px" value="${escAttr(s.notes)}" placeholder="Observação opcional" onchange="setNotes(${s.i},this.value)"></td><td>${s.questions.total?`${s.questions.correct}/${s.questions.total}<br><b>${qp}%</b>`:'—'}</td><td><button class="btn danger" onclick="removeSubject(${s.i})">🗑 Excluir</button></td></tr>`});
+ document.getElementById('tableWrap').innerHTML=h+'</tbody></table>';
 }
 render();
 </script>
