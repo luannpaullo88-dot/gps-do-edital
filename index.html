@@ -83,6 +83,29 @@ tbody tr{transition:background .15s}tbody tr:hover{background:var(--soft)}
 :root[data-theme=dark] .obs-fraco{background:#40191d!important;color:#ff9a9a!important;border-color:#7a2a31!important}
 @media(max-width:600px){.container{padding:0 12px}.stat b{font-size:26px}.theme-btn{top:14px}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ===== RESUMOS ===== */
+#sumModal{position:fixed;inset:0;background:rgba(8,15,30,.6);display:none;align-items:center;justify-content:center;z-index:150;padding:12px}
+#sumModal.open{display:flex}
+.sum-panel{background:var(--card);color:var(--text);border-radius:16px;width:min(860px,100%);max-height:94vh;display:flex;flex-direction:column;padding:16px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.sum-head{display:flex;justify-content:space-between;gap:10px;align-items:start;margin-bottom:10px}.sum-head h3{margin:0;font-size:17px}
+.rt-bar{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-bottom:8px}
+.rt-bar button{padding:6px 10px;font-size:13px;background:var(--soft);color:var(--text);border:1px solid var(--line)}
+.rt-sep{width:1px;height:22px;background:var(--line);margin:0 3px}
+.rt-sw{width:22px;height:22px;padding:0!important;border-radius:50%!important;border:2px solid #fff!important;box-shadow:0 0 0 1px var(--line)}
+.rt-lbl{font-size:11px;color:var(--muted)}
+.rt-editor{background:#fff;color:#172033;border:1px solid var(--line);border-radius:10px;padding:14px;min-height:260px;overflow:auto;flex:1;line-height:1.65;outline:none}
+.rt-editor:focus{box-shadow:0 0 0 3px #2563eb33;border-color:#2563eb}
+.rt-editor img{max-width:100%;height:auto;border-radius:8px;margin:6px 0}
+.rt-editor h2{font-size:20px;margin:10px 0 6px}.rt-editor h3{font-size:17px;margin:10px 0 6px;color:#185adb}
+.rt-editor ul,.rt-editor ol{padding-left:24px}.rt-editor blockquote{border-left:4px solid #2563eb;margin:8px 0;padding:4px 12px;background:#f1f5fb}
+.rt-editor:empty:before{content:'Escreva seu resumo aqui. Cole imagens (Ctrl+V) ou use o botão 🖼️.';color:#8a94a6}
+.sum-foot{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;justify-content:flex-end}
+.sum-view{min-height:0;flex:none;margin-top:8px}
+.sum-item{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px;background:var(--card)}
+.sum-item-head{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+details.sum-disc{margin-bottom:12px}details.sum-disc>summary{cursor:pointer;font-weight:700;font-size:16px;padding:10px 12px;background:var(--soft);border-radius:10px;list-style:none}
+details.sum-disc>summary::-webkit-details-marker{display:none}details.sum-disc[open]>summary{margin-bottom:10px}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
@@ -175,6 +198,39 @@ document.addEventListener('DOMContentLoaded',updateAuthUI);
 <p>Seu edital, revisões, questões, desempenho e prioridades em um só lugar.</p>
 </header>
 <div id="toast" role="status" aria-live="polite"></div>
+<div id="sumModal" role="dialog" aria-modal="true" aria-labelledby="sumTitle">
+ <div class="sum-panel">
+  <div class="sum-head"><div><span class="muted">📄 Resumo do assunto</span><h3 id="sumTitle"></h3></div><button type="button" class="btn light" onclick="closeSummary()" aria-label="Fechar">✖</button></div>
+  <div class="rt-bar" onmousedown="if(event.target.tagName!=='INPUT')event.preventDefault()">
+   <button type="button" title="Negrito" onclick="fmt('bold')"><b>B</b></button>
+   <button type="button" title="Itálico" onclick="fmt('italic')"><i>I</i></button>
+   <button type="button" title="Sublinhado" onclick="fmt('underline')"><u>U</u></button>
+   <button type="button" title="Tachado" onclick="fmt('strikeThrough')"><s>S</s></button>
+   <span class="rt-sep"></span>
+   <button type="button" title="Título" onclick="fmtBlock('H2')">Título</button>
+   <button type="button" title="Subtítulo" onclick="fmtBlock('H3')">Subtítulo</button>
+   <button type="button" title="Texto normal" onclick="fmtBlock('P')">Texto</button>
+   <button type="button" title="Citação" onclick="fmtBlock('BLOCKQUOTE')">❝</button>
+   <span class="rt-sep"></span>
+   <button type="button" title="Lista" onclick="fmt('insertUnorderedList')">• Lista</button>
+   <button type="button" title="Lista numerada" onclick="fmt('insertOrderedList')">1. Lista</button>
+   <span class="rt-sep"></span>
+   <span class="rt-lbl">Cor</span><span id="rtColors" class="rt-bar" style="margin:0"></span>
+   <span class="rt-lbl">Marca-texto</span><span id="rtMarks" class="rt-bar" style="margin:0"></span>
+   <span class="rt-sep"></span>
+   <button type="button" title="Inserir imagem" onclick="document.getElementById('sumImg').click()">🖼️ Imagem</button>
+   <button type="button" title="Limpar formatação" onclick="fmt('removeFormat')">🧹</button>
+   <input type="file" id="sumImg" accept="image/*" style="display:none" onchange="sumPickImage(this)">
+  </div>
+  <div id="sumEditor" class="rt-editor" contenteditable="true" spellcheck="true"></div>
+  <div class="sum-foot">
+   <button type="button" id="sumDone" class="btn green" onclick="sumMarkDone()" style="display:none">✅ Salvar e marcar revisão como feita</button>
+   <button type="button" class="btn" onclick="saveSummary()">💾 Salvar resumo</button>
+   <button type="button" class="btn light" onclick="closeSummary()">Fechar</button>
+  </div>
+ </div>
+</div>
+
 
 <div id="authScreen" style="min-height:70vh;display:flex;align-items:center;justify-content:center;padding:30px 18px;">
   <div class="card" style="width:min(440px,100%);">
@@ -261,6 +317,12 @@ document.addEventListener('DOMContentLoaded',updateAuthUI);
 <div id="tableWrap"></div>
 </div>
 
+<div class="section card" data-tab="resumos">
+<h2>📄 Meus resumos</h2>
+<p class="muted" id="sumCount"></p>
+<div id="summariesView"></div>
+</div>
+
 <div class="section card" data-tab="dados">
 <h2>🗑️ Gerenciar dados</h2>
 <p class="muted">Apaga os dados <b>somente do perfil atualmente selecionado</b> (no perfil mestre, o que estiver marcado no seletor do topo). Outros perfis não são afetados.</p>
@@ -282,7 +344,7 @@ Raciocínio Lógico — Proposições"></textarea>
 
 <script>
 (function(){
-  const TABS=[['agora','🎯 O que fazer agora'],['estudar','📚 O que estudar agora'],['resumo','📊 Resumo do seu desempenho'],['quest','📝 Controle de questões'],['crit','⚠️ Assuntos críticos'],['edital','📋 Verticalização completa do edital'],['add','📥 Cadastrar edital'],['config','⚙️ Configuração da prova'],['dados','🗑️ Gerenciar dados']];
+  const TABS=[['agora','🎯 O que fazer agora'],['estudar','📚 O que estudar agora'],['resumo','📊 Resumo do seu desempenho'],['quest','📝 Controle de questões'],['crit','⚠️ Assuntos críticos'],['edital','📋 Verticalização completa do edital'],['resumos','📄 Meus resumos'],['add','📥 Cadastrar edital'],['config','⚙️ Configuração da prova'],['dados','🗑️ Gerenciar dados']];
   function initTabs(){
     const container=document.querySelector('.container');
     if(!container||container.querySelector('.tabs-nav-gps'))return;
@@ -321,6 +383,27 @@ const num=v=>{v=Math.floor(Number(v));return Number.isFinite(v)&&v>0?v:0};
 function newId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
 function emptyData(){return{examName:'',examDate:'',dailyGoal:20,weights:{},subjects:[],questionLogs:[],studyHistory:[]}}
 
+const OK_TAGS=new Set(['B','STRONG','I','EM','U','S','STRIKE','MARK','SPAN','P','DIV','BR','UL','OL','LI','H2','H3','BLOCKQUOTE','IMG']);
+const SKIP_TAGS=new Set(['SCRIPT','STYLE','IFRAME','OBJECT','EMBED','TEMPLATE','NOSCRIPT','SVG','MATH']);
+const COLOR_RE=/^(#[0-9a-f]{3,8}|rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(,\s*[\d.]+\s*)?\))$/i;
+const IMG_RE=/^data:image\/(png|jpeg|jpg|webp|gif);base64,[a-z0-9+\/=]+$/i;
+function cleanStyle(st){const o=[];String(st||'').split(';').forEach(p=>{const i=p.indexOf(':');if(i<0)return;const k=p.slice(0,i).trim().toLowerCase(),v=p.slice(i+1).trim();if((k==='color'||k==='background-color')&&COLOR_RE.test(v))o.push(k+':'+v);else if(k==='text-align'&&/^(left|center|right|justify)$/.test(v))o.push(k+':'+v)});return o.join(';')}
+function sanitizeHtml(html){
+ if(typeof html!=='string'||!html)return'';
+ const doc=new DOMParser().parseFromString('<body>'+html+'</body>','text/html'),root=document.createElement('div');
+ const copy=(src,dst)=>{src.childNodes.forEach(n=>{
+  if(n.nodeType===3){dst.appendChild(document.createTextNode(n.nodeValue));return}
+  if(n.nodeType!==1)return;
+  const tag=n.tagName.toUpperCase();
+  if(SKIP_TAGS.has(tag))return;
+  if(!OK_TAGS.has(tag)){copy(n,dst);return}
+  const el=document.createElement(tag);
+  if(tag==='IMG'){const u=n.getAttribute('src')||'';if(!IMG_RE.test(u))return;el.setAttribute('src',u);el.setAttribute('alt','')}
+  else{const st=cleanStyle(n.getAttribute('style'));if(st)el.setAttribute('style',st);if(tag!=='BR')copy(n,el)}
+  dst.appendChild(el);
+ })};
+ copy(doc.body,root);return root.innerHTML;
+}
 function normalizeStudyData(value){
  const x=(value&&typeof value==='object')?value:{};
  const out=emptyData();
@@ -337,7 +420,7 @@ function normalizeStudyData(value){
   const q=s.questions||{},t=num(q.total),rd=Array.isArray(s.reviewDates)?s.reviewDates:[],rn=Array.isArray(s.reviewDone)?s.reviewDone:[];
   out.subjects.push({id,discipline:String(s.discipline??'Geral'),topic:String(s.topic??''),status:STATUSES.includes(s.status)?s.status:'pendente',
    reviewDates:[0,1,2].map(n=>vd(rd[n])),reviewDone:[0,1,2].map(n=>!!rn[n]),classification:CLASSES.includes(s.classification)?s.classification:'',
-   notes:String(s.notes??''),questions:{total:t,correct:Math.min(num(q.correct),t)},studyDate:vd(s.studyDate)});
+   notes:String(s.notes??''),questions:{total:t,correct:Math.min(num(q.correct),t)},studyDate:vd(s.studyDate),summary:sanitizeHtml(s.summary)});
  });
  // Dados antigos referenciavam o assunto pelo índice; aqui convertemos para id.
  const idOf=r=>typeof r==='number'?ids[r]:String(r||'');
@@ -460,7 +543,7 @@ function isDue(s){return(s.reviewDates||[]).some((d,i)=>d&&d<=today()&&!(s.revie
 function scheduleReviews(i,base){data.subjects[i].reviewDates=[addDays(base,7),addDays(base,21),addDays(base,42)];data.subjects[i].reviewDone=[false,false,false]}
 function saveSettings(){data.examName=document.getElementById('examName').value.trim();data.examDate=vd(document.getElementById('examDate').value);save();toast('✅ Configurações salvas.')}
 function parseLine(line){const p=line.trim().split(/\s+[—–-]\s+/);if(p.length>=2)return{discipline:p.shift().trim(),topic:p.join(' — ').trim()};return{discipline:'Geral',topic:line.trim()}}
-function addSubject(d,t){if(!data.subjects.some(s=>s.discipline.toLowerCase()===d.toLowerCase()&&s.topic.toLowerCase()===t.toLowerCase()))data.subjects.push({id:newId(),discipline:d,topic:t,status:'pendente',reviewDates:['','',''],reviewDone:[false,false,false],classification:'',notes:'',questions:{total:0,correct:0},studyDate:''})}
+function addSubject(d,t){if(!data.subjects.some(s=>s.discipline.toLowerCase()===d.toLowerCase()&&s.topic.toLowerCase()===t.toLowerCase()))data.subjects.push({id:newId(),discipline:d,topic:t,status:'pendente',reviewDates:['','',''],reviewDone:[false,false,false],classification:'',notes:'',questions:{total:0,correct:0},studyDate:'',summary:''})}
 function addBulk(){const lines=document.getElementById('bulkInput').value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);if(!lines.length){alert('Cole os assuntos primeiro.');return}let a=0,d=0;lines.forEach(l=>{const x=parseLine(l),n=data.subjects.length;addSubject(x.discipline,x.topic);data.subjects.length>n?a++:d++});document.getElementById('bulkInput').value='';save();toast(`✅ ${a} adicionados • ${d} já existiam`)}
 function setStatus(i,status){
  const s=data.subjects[i];s.status=status;
@@ -549,7 +632,7 @@ function render(){
  document.getElementById('criticalCount').textContent=due+weak+low;document.getElementById('mStudied').textContent=done;document.getElementById('mWeak').textContent=weak;document.getElementById('mReviews').textContent=due;
  const qt=data.subjects.reduce((a,s)=>a+s.questions.total,0),qc=data.subjects.reduce((a,s)=>a+s.questions.correct,0),qp=qt?Math.round(qc/qt*100):0;
  document.getElementById('questionAccuracy').textContent=qp+'%';document.getElementById('questionLabel').textContent=qt+' feitas';document.getElementById('mQuestions').textContent=qt;
- renderPriority();renderToday();renderSummary();renderQuestions();renderCritical();renderTable();renderWeekly();
+ renderPriority();renderToday();renderSummary();renderQuestions();renderCritical();renderTable();renderWeekly();renderSummariesTab();
 }
 let studyDiscFilter='todas';
 function questionsToday(){return data.questionLogs.filter(r=>r.date===today()).reduce((a,r)=>a+r.total,0)}
@@ -576,11 +659,11 @@ function renderPriority(){
  const due=[];data.subjects.forEach(s=>s.reviewDates.forEach((d,n)=>{if(d&&d<=t&&!s.reviewDone[n])due.push({s,n,d})}));
  h+=`<h3 class="today-title">🟣 Revisões de hoje / vencidas (${due.length})</h3>`;
  if(!due.length)h+='<div class="empty">Nenhuma revisão pendente.</div>';
- else h+='<div class="priority-grid">'+due.slice(0,30).map(x=>`<div class="priority-item"><b>${x.n+1}ª revisão • ${formatDate(x.d)}</b><span>${esc(x.s.discipline)} — ${esc(x.s.topic)}</span><br><button class="btn green" style="margin-top:7px;padding:6px 9px;font-size:12px" onclick="doReview('${x.s.id}',${x.n})">✅ Feita</button></div>`).join('')+'</div>';
+ else h+='<div class="priority-grid">'+due.slice(0,30).map(x=>`<div class="priority-item"><b>${x.n+1}ª revisão • ${formatDate(x.d)}</b><span>${esc(x.s.discipline)} — ${esc(x.s.topic)}</span><br><span class="actions" style="margin-top:7px"><button class="btn light" style="padding:6px 9px;font-size:12px" onclick="openSummary('${x.s.id}',${x.n})">📄 Revisar</button><button class="btn green" style="padding:6px 9px;font-size:12px" onclick="doReview('${x.s.id}',${x.n})">✅ Feita</button></span></div>`).join('')+'</div>';
  const al=data.subjects.filter(s=>s.classification==='fraco'||(questionPct(s)!==null&&questionPct(s)<60));
  h+=`<h3 class="today-title" style="margin-top:18px">⚠️ Alertas de desempenho (${al.length})</h3>`;
  if(!al.length)h+='<div class="empty">Nenhum assunto fraco ou abaixo de 60% em questões.</div>';
- else h+='<div class="priority-grid">'+al.slice(0,8).map(s=>{const i=data.subjects.indexOf(s),m=[];if(s.classification==='fraco')m.push('🔴 Fraco');if(questionPct(s)!==null&&questionPct(s)<60)m.push('📝 '+questionPct(s)+'% em questões');return`<div class="priority-item"><b>${m.join(' • ')}</b><span>${esc(s.discipline)} — ${esc(s.topic)}</span><br><span class="actions" style="margin-top:7px"><button class="btn light" style="padding:6px 9px;font-size:12px" onclick="goQuestions('${s.id}')">📝 Registrar questões</button><button class="btn light" style="padding:6px 9px;font-size:12px" onclick="focusRow(${i})">Ver assunto</button></span></div>`}).join('')+'</div>';
+ else h+='<div class="priority-grid">'+al.slice(0,8).map(s=>{const i=data.subjects.indexOf(s),m=[];if(s.classification==='fraco')m.push('🔴 Fraco');if(questionPct(s)!==null&&questionPct(s)<60)m.push('📝 '+questionPct(s)+'% em questões');return`<div class="priority-item"><b>${m.join(' • ')}</b><span>${esc(s.discipline)} — ${esc(s.topic)}</span><br><span class="actions" style="margin-top:7px"><button class="btn light" style="padding:6px 9px;font-size:12px" onclick="openSummary('${s.id}')">📄 Resumo</button><button class="btn light" style="padding:6px 9px;font-size:12px" onclick="goQuestions('${s.id}')">📝 Registrar questões</button><button class="btn light" style="padding:6px 9px;font-size:12px" onclick="focusRow(${i})">Ver assunto</button></span></div>`}).join('')+'</div>';
  document.getElementById('priorityPanel').innerHTML=h;
 }
 function renderToday(){
@@ -592,7 +675,7 @@ function renderToday(){
  const going=data.subjects.filter(s=>s.status==='estudando'&&vis.includes(s.discipline));
  h+=`<h3 class="today-title">🔵 Em andamento (${going.length})</h3>`;
  if(!going.length)h+='<div class="empty">Nenhum assunto em andamento.</div>';
- else h+='<div class="priority-grid">'+going.map(s=>{const i=data.subjects.indexOf(s);return`<div class="priority-item"><b>${esc(s.discipline)}</b><span>${esc(s.topic)}</span><br><button class="btn green" style="margin-top:7px;padding:6px 9px;font-size:12px" onclick="setStatus(${i},'estudado')">✅ Concluí</button></div>`}).join('')+'</div>';
+ else h+='<div class="priority-grid">'+going.map(s=>{const i=data.subjects.indexOf(s);return`<div class="priority-item"><b>${esc(s.discipline)}</b><span>${esc(s.topic)}</span><br><span class="actions" style="margin-top:7px"><button class="btn light" style="padding:6px 9px;font-size:12px" onclick="openSummary('${s.id}')">📄 Resumo</button><button class="btn green" style="padding:6px 9px;font-size:12px" onclick="setStatus(${i},'estudado')">✅ Concluí</button></span></div>`}).join('')+'</div>';
  h+='<h3 class="today-title" style="margin-top:18px">➡️ Próximo assunto de cada disciplina</h3><div class="priority-grid">';
  vis.forEach(d=>{
   const pend=data.subjects.filter(s=>s.discipline===d&&s.status==='pendente'),nx=pend[0];
@@ -638,8 +721,83 @@ function renderTable(){
  if(!rows.length){document.getElementById('tableWrap').innerHTML='<div class="empty">Nenhum assunto encontrado.</div>';return}
  const rv=(s,n)=>`<label class="review-item">R${n+1} <input type="date" value="${esc(s.reviewDates[n])}" onchange="setReview(${s.i},${n},this.value)"><input type="checkbox" ${s.reviewDone[n]?'checked':''} onchange="setReviewDone(${s.i},${n},this.checked)"></label>`;
  let h='<table><thead><tr><th>#</th><th>Disciplina</th><th>Assunto</th><th>Status</th><th>3 revisões</th><th>Classificação</th><th>Questões</th><th>Ação</th></tr></thead><tbody>';
- rows.forEach(s=>{const qp=questionPct(s);h+=`<tr id="row-${s.i}"><td>${s.i+1}</td><td><b>${esc(s.discipline)}</b></td><td>${esc(s.topic)}${s.studyDate?`<div class="history">Estudado em ${formatDate(s.studyDate)}</div>`:''}</td><td><select onchange="setStatus(${s.i},this.value)"><option value="pendente" ${s.status==='pendente'?'selected':''}>🔴 Não estudado</option><option value="estudando" ${s.status==='estudando'?'selected':''}>🔵 Estudando</option><option value="estudado" ${s.status==='estudado'?'selected':''}>🟢 Estudado</option></select></td><td><div class="review-box">${rv(s,0)}${rv(s,1)}${rv(s,2)}</div></td><td><select class="obs-select ${classificationClass(s.classification)}" onchange="setClassification(${s.i},this.value);this.className='obs-select '+classificationClass(this.value)"><option value="" ${!s.classification?'selected':''}>Classificação</option><option value="dominio" ${s.classification==='dominio'?'selected':''}>🟢 Domínio</option><option value="revisar" ${s.classification==='revisar'?'selected':''}>🟡 Revisar</option><option value="fraco" ${s.classification==='fraco'?'selected':''}>🔴 Fraco</option></select><input style="margin-top:4px;font-size:11px;padding:6px" value="${escAttr(s.notes)}" placeholder="Observação opcional" onchange="setNotes(${s.i},this.value)"></td><td>${s.questions.total?`${s.questions.correct}/${s.questions.total}<br><b>${qp}%</b>`:'—'}</td><td><button class="btn danger" onclick="removeSubject(${s.i})">🗑 Excluir</button></td></tr>`});
+ rows.forEach(s=>{const qp=questionPct(s);h+=`<tr id="row-${s.i}"><td>${s.i+1}</td><td><b>${esc(s.discipline)}</b></td><td>${esc(s.topic)}${s.studyDate?`<div class="history">Estudado em ${formatDate(s.studyDate)}</div>`:''}</td><td><select onchange="setStatus(${s.i},this.value)"><option value="pendente" ${s.status==='pendente'?'selected':''}>🔴 Não estudado</option><option value="estudando" ${s.status==='estudando'?'selected':''}>🔵 Estudando</option><option value="estudado" ${s.status==='estudado'?'selected':''}>🟢 Estudado</option></select></td><td><div class="review-box">${rv(s,0)}${rv(s,1)}${rv(s,2)}</div></td><td><select class="obs-select ${classificationClass(s.classification)}" onchange="setClassification(${s.i},this.value);this.className='obs-select '+classificationClass(this.value)"><option value="" ${!s.classification?'selected':''}>Classificação</option><option value="dominio" ${s.classification==='dominio'?'selected':''}>🟢 Domínio</option><option value="revisar" ${s.classification==='revisar'?'selected':''}>🟡 Revisar</option><option value="fraco" ${s.classification==='fraco'?'selected':''}>🔴 Fraco</option></select><input style="margin-top:4px;font-size:11px;padding:6px" value="${escAttr(s.notes)}" placeholder="Observação opcional" onchange="setNotes(${s.i},this.value)"></td><td>${s.questions.total?`${s.questions.correct}/${s.questions.total}<br><b>${qp}%</b>`:'—'}</td><td><div class="actions"><button class="btn ${hasSummary(s)?'green':'light'}" onclick="openSummary('${s.id}')">📄 ${hasSummary(s)?'Ver resumo':'Resumo'}</button><button class="btn danger" onclick="removeSubject(${s.i})">🗑 Excluir</button></div></td></tr>`});
  document.getElementById('tableWrap').innerHTML=h+'</tbody></table>';
+}
+
+let sumId=null,sumReview=null,sumDirty=false,sumRange=null;
+function hasSummary(s){const h=s.summary||'';return /<img/i.test(h)||h.replace(/<[^>]*>/g,'').replace(/&nbsp;/g,' ').trim().length>0}
+function sumEd(){return document.getElementById('sumEditor')}
+function openSummary(id,review){
+ const s=byId(id);if(!s)return;
+ sumId=id;sumReview=review===undefined?null:review;sumDirty=false;sumRange=null;
+ document.getElementById('sumTitle').textContent=s.discipline+' — '+s.topic;
+ sumEd().innerHTML=sanitizeHtml(s.summary||'');
+ document.getElementById('sumDone').style.display=sumReview===null?'none':'';
+ document.getElementById('sumModal').classList.add('open');document.body.style.overflow='hidden';
+}
+function closeSummary(force){
+ if(force!==true&&sumDirty&&!confirm('Há alterações não salvas. Fechar mesmo assim?'))return;
+ document.getElementById('sumModal').classList.remove('open');document.body.style.overflow='';sumId=null;sumDirty=false;
+}
+function saveSummary(quiet){
+ const s=byId(sumId);if(!s)return false;
+ const h=sanitizeHtml(sumEd().innerHTML);
+ if(h.length>900000){toast('Resumo muito grande. Remova algumas imagens ou reduza o texto.',true);return false}
+ s.summary=hasSummary({summary:h})?h:'';sumDirty=false;save();
+ if(quiet!==true)toast('✅ Resumo salvo.');return true;
+}
+function sumMarkDone(){
+ const id=sumId,n=sumReview;if(!saveSummary(true))return;
+ doReview(id,n);closeSummary(true);toast('✅ Revisão marcada como feita.');
+}
+function keepRange(){const sel=getSelection();if(sel.rangeCount&&sumEd().contains(sel.anchorNode))sumRange=sel.getRangeAt(0).cloneRange()}
+function restoreRange(){sumEd().focus();if(sumRange){const sel=getSelection();sel.removeAllRanges();sel.addRange(sumRange)}}
+function fmt(cmd,val){restoreRange();document.execCommand('styleWithCSS',false,true);document.execCommand(cmd,false,val||null);sumDirty=true;keepRange()}
+function fmtBlock(tag){fmt('formatBlock',tag)}
+function sumPickImage(inp){const f=inp.files&&inp.files[0];inp.value='';if(f)sumAddImage(f)}
+function sumAddImage(f){
+ if(!/^image\//.test(f.type)){toast('O arquivo não é uma imagem.',true);return}
+ const r=new FileReader();
+ r.onload=()=>{const im=new Image();
+  im.onload=()=>{const k=Math.min(1,900/Math.max(im.width,im.height)),c=document.createElement('canvas');
+   c.width=Math.max(1,Math.round(im.width*k));c.height=Math.max(1,Math.round(im.height*k));
+   const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(im,0,0,c.width,c.height);
+   restoreRange();document.execCommand('insertImage',false,c.toDataURL('image/jpeg',0.72));sumDirty=true;keepRange()};
+  im.onerror=()=>toast('Não foi possível ler a imagem.',true);im.src=r.result};
+ r.readAsDataURL(f);
+}
+(function initSummaryUI(){
+ const TXT=['#c93636','#185adb','#168a4a','#6b36a8','#d9730d','#172033'],HL=['#fff176','#a5f3a5','#ffc9de','#a9d6ff','#ffd8a8'];
+ document.getElementById('rtColors').innerHTML=TXT.map(c=>`<button type="button" class="rt-sw" style="background:${c}" title="Cor do texto" onclick="fmt('foreColor','${c}')"></button>`).join('');
+ document.getElementById('rtMarks').innerHTML=HL.map(c=>`<button type="button" class="rt-sw" style="background:${c}" title="Marca-texto" onclick="fmt('hiliteColor','${c}')"></button>`).join('')+'<button type="button" title="Remover marca-texto" onclick="fmt(\'hiliteColor\',\'transparent\')">✖</button>';
+ const ed=sumEd();
+ ['keyup','mouseup','focus'].forEach(e=>ed.addEventListener(e,keepRange));
+ ed.addEventListener('input',()=>{sumDirty=true});
+ ed.addEventListener('paste',e=>{
+  e.preventDefault();const cd=e.clipboardData;if(!cd)return;
+  const img=[...(cd.files||[])].find(f=>/^image\//.test(f.type));
+  if(img){sumAddImage(img);return}
+  const html=cd.getData('text/html');
+  if(html)document.execCommand('insertHTML',false,sanitizeHtml(html));else document.execCommand('insertText',false,cd.getData('text/plain'));
+ });
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('sumModal').classList.contains('open'))closeSummary()});
+})();
+
+const sumOpenDiscs=new Set();
+function toggleSumDisc(el){if(el.open)sumOpenDiscs.add(el.dataset.d);else sumOpenDiscs.delete(el.dataset.d)}
+function renderSummariesTab(){
+ const box=document.getElementById('summariesView'),cnt=document.getElementById('sumCount');if(!box)return;
+ const withSum=data.subjects.filter(hasSummary);
+ if(!withSum.length){cnt.textContent='';box.innerHTML='<div class="empty">Você ainda não escreveu nenhum resumo. Na aba "Verticalização completa do edital", use o botão 📄 Resumo em cada assunto.</div>';return}
+ const discs=[...new Set(withSum.map(s=>s.discipline))];
+ cnt.textContent=withSum.length+' resumo(s) em '+discs.length+' disciplina(s). Clique na disciplina para abrir.';
+ const lbl={pendente:'🔴 Não estudado',estudando:'🔵 Estudando',estudado:'🟢 Estudado'};
+ box.innerHTML=discs.map(d=>{
+  const list=withSum.filter(s=>s.discipline===d);
+  return `<details class="sum-disc" data-d="${esc(d)}" ${sumOpenDiscs.has(d)?'open':''} ontoggle="toggleSumDisc(this)"><summary>${esc(d)} <span class="muted">(${list.length})</span></summary>`+
+  list.map(s=>`<div class="sum-item"><div class="sum-item-head"><b>${esc(s.topic)}</b><span class="actions"><span class="muted">${lbl[s.status]||''}</span><button class="btn light" style="padding:6px 10px;font-size:12px" onclick="openSummary('${s.id}')">✏️ Abrir / editar</button></span></div><div class="rt-editor sum-view">${sanitizeHtml(s.summary)}</div></div>`).join('')+'</details>';
+ }).join('');
 }
 render();
 </script>
