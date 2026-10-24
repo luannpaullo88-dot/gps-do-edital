@@ -229,16 +229,8 @@ document.addEventListener('DOMContentLoaded',updateAuthUI);
 <div class="metric"><span class="muted">Revisões pendentes</span><strong id="mReviews">0</strong></div>
 <div class="metric"><span class="muted">Questões feitas</span><strong id="mQuestions">0</strong></div>
 </div>
-</div>
-
-<div class="section card" data-tab="semana">
-<h2>📈 Evolução dos últimos 7 dias</h2>
-<div id="weekly"></div>
-</div>
-
-<div class="section card" data-tab="disc">
-<h2>📚 Resumo por disciplina</h2>
-<div id="disciplineSummary"></div>
+<div style="margin-top:24px"><h3 class="today-title">📈 Evolução dos últimos 7 dias</h3><div id="weekly"></div></div>
+<div style="margin-top:24px"><h3 class="today-title">📚 Resumo por disciplina</h3><div id="disciplineSummary"></div></div>
 </div>
 
 <div class="section card" data-tab="quest">
@@ -269,12 +261,6 @@ document.addEventListener('DOMContentLoaded',updateAuthUI);
 <div id="tableWrap"></div>
 </div>
 
-<div class="section card" data-tab="backup">
-<h2>💾 Backup</h2>
-<p class="muted">Exporte seus dados para um arquivo. Importar substitui os dados do perfil atual.</p>
-<div class="actions"><button class="btn green" onclick="exportData()">💾 Exportar meus dados</button><label class="btn light" style="display:inline-block">📂 Importar meus dados<input type="file" id="importFile" accept=".json" onchange="importData(event)" style="display:none"></label></div>
-</div>
-
 <div class="section card" data-tab="dados">
 <h2>🗑️ Gerenciar dados</h2>
 <p class="muted">Apaga os dados <b>somente do perfil atualmente selecionado</b> (no perfil mestre, o que estiver marcado no seletor do topo). Outros perfis não são afetados.</p>
@@ -282,7 +268,7 @@ document.addEventListener('DOMContentLoaded',updateAuthUI);
 </div>
 
 <div class="section card highlight" data-tab="add">
-<h2>📥 Adicionar o edital inteiro de uma vez</h2>
+<h2>📥 Cadastrar edital</h2>
 <p class="muted">Cole os assuntos do edital, um por linha. Use <b>Disciplina — Assunto</b> para separar automaticamente.</p>
 <textarea id="bulkInput" placeholder="Língua Portuguesa — Interpretação de textos
 Língua Portuguesa — Classes de palavras
@@ -296,7 +282,7 @@ Raciocínio Lógico — Proposições"></textarea>
 
 <script>
 (function(){
-  const TABS=[['config','⚙️ Configuração da prova'],['agora','🎯 O que fazer agora'],['estudar','📚 O que estudar agora'],['resumo','📊 Resumo do seu desempenho'],['semana','📈 Evolução dos últimos 7 dias'],['disc','📚 Resumo por disciplina'],['quest','📝 Controle de questões'],['crit','⚠️ Assuntos críticos'],['edital','📋 Verticalização completa do edital'],['backup','💾 Backup'],['add','📥 Adicionar o edital inteiro de uma vez'],['dados','🗑️ Gerenciar dados']];
+  const TABS=[['agora','🎯 O que fazer agora'],['estudar','📚 O que estudar agora'],['resumo','📊 Resumo do seu desempenho'],['quest','📝 Controle de questões'],['crit','⚠️ Assuntos críticos'],['edital','📋 Verticalização completa do edital'],['add','📥 Cadastrar edital'],['config','⚙️ Configuração da prova'],['dados','🗑️ Gerenciar dados']];
   function initTabs(){
     const container=document.querySelector('.container');
     if(!container||container.querySelector('.tabs-nav-gps'))return;
