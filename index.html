@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GPS do Edital — Guia de Estudos</title>
+<script>
+(function(){var t=null;try{t=localStorage.getItem('gps_theme')}catch(e){}
+if(!t)t=(window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light';
+document.documentElement.setAttribute('data-theme',t)})();
+function updateThemeBtn(){var b=document.getElementById('themeBtn');if(b)b.textContent=document.documentElement.getAttribute('data-theme')==='dark'?'☀️':'🌙'}
+function toggleTheme(){var t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',t);try{localStorage.setItem('gps_theme',t)}catch(e){}updateThemeBtn()}
+document.addEventListener('DOMContentLoaded',updateThemeBtn);
+var _tt;function toast(m,err){var e=document.getElementById('toast');if(!e)return;e.textContent=m;e.className='show'+(err?' err':'');clearTimeout(_tt);_tt=setTimeout(function(){e.className=''},3200)}
+</script>
 <style>
 :root{--bg:#f4f7fb;--card:#fff;--text:#172033;--muted:#667085;--line:#dfe5ee;--primary:#185adb;--green:#168a4a;--yellow:#b77900;--red:#c93636;--purple:#6b36a8}
 *{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
@@ -26,6 +35,54 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:10px 8px
 .tab-btn-gps.active{background:#2563eb;color:#fff;border-color:#2563eb}
 .gps-tab-panel{display:none!important}.gps-tab-panel.active{display:block!important}
 @media(max-width:700px){.tabs-nav-gps{overflow-x:auto;flex-wrap:nowrap}.tab-btn-gps{white-space:nowrap;font-size:12px;padding:8px 10px}}
+
+/* ===== VISUAL V2 ===== */
+:root{--soft:#f1f5fb;--input:#fff;--shadow:0 4px 18px rgba(19,35,63,.08)}
+:root[data-theme=dark]{--bg:#0d1524;--card:#15213a;--text:#e6ecf7;--muted:#93a1ba;--line:#263553;--soft:#1b2a47;--input:#101b31;--shadow:0 4px 18px rgba(0,0,0,.35);color-scheme:dark}
+body{transition:background .25s,color .25s;-webkit-font-smoothing:antialiased}
+header{position:relative;background:linear-gradient(135deg,#0f1d36 0%,#1c3f9e 100%);padding:26px 5% 22px}
+header h1{letter-spacing:-.3px}
+.theme-btn{position:absolute;top:18px;right:5%;width:42px;height:42px;padding:0;border-radius:50%;background:#ffffff22;color:#fff;font-size:18px;backdrop-filter:blur(6px)}
+.theme-btn:hover{background:#ffffff40}
+#gpsUserBar{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+#gpsUserBar>span,#gpsUserBar>select{background:#ffffff1c;border:1px solid #ffffff2e;color:#fff;border-radius:20px;padding:5px 12px;margin:0!important}
+#gpsUserBar>select option{color:#172033}
+#gpsUserBar>button{background:#ffffff26;color:#fff;border-radius:20px;padding:5px 14px;margin:0!important}
+#gpsUserBar>button:hover{background:#ffffff40}
+.card{background:var(--card);border-color:var(--line);box-shadow:var(--shadow);transition:box-shadow .2s,transform .2s}
+.grid .card{border-top:4px solid #2563eb}.grid .card:nth-child(2){border-top-color:#16a34a}.grid .card:nth-child(3){border-top-color:#dc2626}.grid .card:nth-child(4){border-top-color:#7c3aed}
+.grid .card:hover{transform:translateY(-2px)}
+.stat b{font-size:32px;letter-spacing:-.5px}
+.progress{background:var(--line);height:10px}.progress span{background:linear-gradient(90deg,#2563eb,#38bdf8);transition:width .5s}
+input,textarea,select{background:var(--input);border-color:var(--line);color:var(--text);transition:border-color .15s,box-shadow .15s}
+input:focus,textarea:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px #2563eb33}
+.field label,#authScreen label{display:block;font-weight:600;font-size:12px;color:var(--muted);margin-bottom:4px}
+button{transition:transform .12s,filter .15s,background .15s}
+button:hover{filter:brightness(1.07)}button:active{transform:scale(.97)}
+button:focus-visible,.tab-btn-gps:focus-visible{outline:3px solid #2563eb66;outline-offset:2px}
+.btn.light{background:var(--soft);color:var(--text)}
+.priority-item,.metric{background:var(--card);border-color:var(--line)}
+.priority-item{transition:box-shadow .2s,transform .2s}.priority-item:hover{box-shadow:var(--shadow);transform:translateY(-1px)}
+.metric{background:var(--soft)}
+th{background:var(--soft);position:sticky;top:0}
+tbody tr{transition:background .15s}tbody tr:hover{background:var(--soft)}
+.empty{border-color:var(--line);background:var(--soft)}
+.tabs-nav-gps{background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);margin:12px 0;padding:10px 0;scrollbar-width:thin}
+.tab-btn-gps{background:var(--card);color:var(--text);border-color:var(--line);border-radius:999px;font-size:13px}
+.tab-btn-gps.active{background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border-color:transparent;box-shadow:0 4px 12px #2563eb55}
+.gps-tab-panel.active{animation:gpsFade .28s ease}
+@keyframes gpsFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+#authScreen{background:radial-gradient(circle at 20% 10%,#dbe7ff,transparent 45%),radial-gradient(circle at 85% 90%,#e7defc,transparent 40%)}
+:root[data-theme=dark] #authScreen{background:radial-gradient(circle at 20% 10%,#1a2f63,transparent 45%),radial-gradient(circle at 85% 90%,#2c1d55,transparent 40%)}
+#authScreen .card{box-shadow:0 18px 50px rgba(19,35,63,.18);padding:26px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:#13233f;color:#fff;padding:12px 20px;border-radius:12px;opacity:0;pointer-events:none;transition:.25s;z-index:200;box-shadow:0 10px 30px rgba(0,0,0,.3);max-width:90vw;font-size:14px}
+#toast.show{opacity:1;transform:translate(-50%,0)}#toast.err{background:#b42318}
+:root[data-theme=dark] .btn.danger{background:#3a1d22;border-color:#6b2a33;color:#ff9a9a}
+:root[data-theme=dark] .obs-dominio{background:#12382a!important;color:#6ee7a0!important;border-color:#1f6b46!important}
+:root[data-theme=dark] .obs-revisar{background:#3d3012!important;color:#fcd34d!important;border-color:#7a5f1c!important}
+:root[data-theme=dark] .obs-fraco{background:#40191d!important;color:#ff9a9a!important;border-color:#7a2a31!important}
+@media(max-width:600px){.container{padding:0 12px}.stat b{font-size:26px}.theme-btn{top:14px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
@@ -113,9 +170,11 @@ document.addEventListener('DOMContentLoaded',updateAuthUI);
 </head>
 <body>
 <header>
+<button id="themeBtn" class="theme-btn" type="button" onclick="toggleTheme()" aria-label="Alternar tema claro/escuro"></button>
 <h1>🎯 GPS do Edital — Guia de Estudos</h1>
 <p>Seu edital, revisões, questões, desempenho e prioridades em um só lugar.</p>
 </header>
+<div id="toast" role="status" aria-live="polite"></div>
 
 <div id="authScreen" style="min-height:70vh;display:flex;align-items:center;justify-content:center;padding:30px 18px;">
   <div class="card" style="width:min(440px,100%);">
@@ -413,10 +472,10 @@ function byId(id){return data.subjects.find(s=>s.id===id)}
 function daysLeft(){if(!data.examDate)return null;const a=new Date();a.setHours(0,0,0,0);return Math.ceil((new Date(data.examDate+'T00:00:00')-a)/86400000)}
 function isDue(s){return(s.reviewDates||[]).some((d,i)=>d&&d<=today()&&!(s.reviewDone||[])[i])}
 function scheduleReviews(i,base){data.subjects[i].reviewDates=[addDays(base,7),addDays(base,21),addDays(base,42)];data.subjects[i].reviewDone=[false,false,false]}
-function saveSettings(){data.examName=document.getElementById('examName').value.trim();data.examDate=vd(document.getElementById('examDate').value);save();alert('Configurações salvas.')}
+function saveSettings(){data.examName=document.getElementById('examName').value.trim();data.examDate=vd(document.getElementById('examDate').value);save();toast('✅ Configurações salvas.')}
 function parseLine(line){const p=line.trim().split(/\s+[—–-]\s+/);if(p.length>=2)return{discipline:p.shift().trim(),topic:p.join(' — ').trim()};return{discipline:'Geral',topic:line.trim()}}
 function addSubject(d,t){if(!data.subjects.some(s=>s.discipline.toLowerCase()===d.toLowerCase()&&s.topic.toLowerCase()===t.toLowerCase()))data.subjects.push({id:newId(),discipline:d,topic:t,status:'pendente',reviewDates:['','',''],reviewDone:[false,false,false],classification:'',notes:'',questions:{total:0,correct:0},studyDate:''})}
-function addBulk(){const lines=document.getElementById('bulkInput').value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);if(!lines.length){alert('Cole os assuntos primeiro.');return}let a=0,d=0;lines.forEach(l=>{const x=parseLine(l),n=data.subjects.length;addSubject(x.discipline,x.topic);data.subjects.length>n?a++:d++});document.getElementById('bulkInput').value='';save();alert(`Importação concluída!\n\nAdicionados: ${a}\nJá existentes: ${d}`)}
+function addBulk(){const lines=document.getElementById('bulkInput').value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);if(!lines.length){alert('Cole os assuntos primeiro.');return}let a=0,d=0;lines.forEach(l=>{const x=parseLine(l),n=data.subjects.length;addSubject(x.discipline,x.topic);data.subjects.length>n?a++:d++});document.getElementById('bulkInput').value='';save();toast(`✅ ${a} adicionados • ${d} já existiam`)}
 function setStatus(i,status){
  const s=data.subjects[i];s.status=status;
  if(status==='estudado'&&!s.studyDate){
@@ -472,7 +531,7 @@ function importData(e){
   try{
    const x=JSON.parse(r.result);if(!x||!Array.isArray(x.subjects))throw Error();
    if(!confirm('Importar vai SUBSTITUIR os dados do perfil atual. Continuar?'))return;
-   data=normalizeStudyData(x);save();alert('Backup importado com sucesso.');
+   data=normalizeStudyData(x);save();toast('✅ Backup importado com sucesso.');
   }catch{alert('Arquivo de backup inválido.')}
   e.target.value='';
  };
@@ -489,7 +548,7 @@ async function clearAll(){
  dirty=true;clearTimeout(cloudSaveTimer);
  await saveCloudData();
  while(cloudSaving)await new Promise(r=>setTimeout(r,50));
- alert(dirty?'Os dados foram apagados aqui, mas houve erro ao salvar na nuvem. Tente novamente.':'Dados do perfil apagados com sucesso.');
+ dirty?toast('Apagado aqui, mas houve erro ao salvar na nuvem. Tente novamente.',true):toast('🗑️ Dados do perfil apagados.');
 }
 
 function render(){
