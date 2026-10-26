@@ -2,8 +2,9 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>GPS do Edital — Guia de Estudos</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E🎯%3C/text%3E%3C/svg%3E">
 <script>
 (function(){var t=null;try{t=localStorage.getItem('gps_theme')}catch(e){}
 if(!t)t=(window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light';
@@ -118,6 +119,35 @@ details.sum-disc>summary::-webkit-details-marker{display:none}details.sum-disc[o
 .edital-bar select{width:auto;min-width:200px;flex:1;max-width:360px}.edital-bar label{margin:0;font-weight:700}
 .rt-sw.on{outline:3px solid #2563eb;outline-offset:2px}
 .rt-bar .rt-eraser.on{background:#2563eb;color:#fff}
+
+/* ===== MOBILE ===== */
+#gpsBottomNav{display:none}
+#gpsMoreSheet{display:none;position:fixed;inset:0;background:rgba(8,15,30,.5);z-index:120;align-items:flex-end}
+#gpsMoreSheet.open{display:flex}
+.sheet-panel{background:var(--card);color:var(--text);width:100%;border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));max-height:80vh;overflow:auto}
+.sheet-grid{display:grid;gap:8px;margin-top:10px}
+.sheet-grid button{text-align:left;background:var(--soft);color:var(--text);padding:13px;font-size:14px}
+.sheet-grid button.active{background:#2563eb;color:#fff}
+@media(max-width:700px){
+ .tabs-nav-gps{display:none}
+ #gpsBottomNav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--card);border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom));box-shadow:0 -4px 16px rgba(0,0,0,.12)}
+ #gpsBottomNav button{flex:1;background:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;padding:6px 2px;border-radius:10px}
+ #gpsBottomNav button .ic{font-size:21px;line-height:1}
+ #gpsBottomNav button.active{color:#2563eb;background:var(--soft)}
+ .container{padding-bottom:90px}
+ #toast{bottom:92px}
+ .tbl-edital,.tbl-edital tbody{display:block;white-space:normal;overflow:visible}
+ .tbl-edital thead{display:none}
+ .tbl-edital tr{display:block;border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px;background:var(--card);box-shadow:var(--shadow)}
+ .tbl-edital tbody tr:hover{background:var(--card)}
+ .tbl-edital td{display:block;border:0;padding:6px 0}
+ .tbl-edital td:first-child{display:none}
+ .tbl-edital td[data-l]::before{content:attr(data-l);display:block;font-size:11px;text-transform:uppercase;color:var(--muted);margin-bottom:3px;font-weight:700}
+ .tbl-edital td[data-l="Disciplina"]{padding-bottom:0}.tbl-edital td[data-l="Assunto"]{font-size:16px;font-weight:600}
+ .tbl-edital td select,.tbl-edital td input[type=text],.tbl-edital td>input{width:100%}
+ .tbl-edital .review-box{min-width:0;gap:8px}.tbl-edital .review-item input[type=date]{width:128px;padding:7px}
+ .tbl-edital .actions .btn{flex:1;padding:11px}
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
@@ -398,10 +428,22 @@ Raciocínio Lógico — Proposições"></textarea>
     function openTab(id){
       sections.forEach(x=>x.el.classList.toggle('active',x.el.id===id));
       [...nav.children].forEach(b=>b.classList.toggle('active',b.dataset.tab===id));
+      if(window._gpsBottomUpdate)window._gpsBottomUpdate(id);
       try{localStorage.setItem('gps_active_tab',id)}catch(e){}
       window.scrollTo({top:0,behavior:'smooth'});
     }
     window.openGpsTab=openTab;
+    const MAIN=[['agora','🎯','Agora'],['estudar','📚','Estudar'],['quest','📝','Questões'],['resumos','📄','Resumos']],mainIds=MAIN.map(m=>'gps-tab-'+m[0]);
+    const bn=document.createElement('nav');bn.id='gpsBottomNav';bn.setAttribute('aria-label','Navegação principal');
+    bn.innerHTML=MAIN.map(m=>`<button type="button" data-tab="gps-tab-${m[0]}"><span class="ic">${m[1]}</span>${m[2]}</button>`).join('')+'<button type="button" data-more="1"><span class="ic">☰</span>Mais</button>';
+    const sheet=document.createElement('div');sheet.id='gpsMoreSheet';
+    sheet.innerHTML='<div class="sheet-panel"><b>Todas as seções</b><div class="sheet-grid"></div></div>';
+    const grid=sheet.querySelector('.sheet-grid');
+    sections.forEach(x=>{const b=document.createElement('button');b.type='button';b.textContent=x.title;b.dataset.tab=x.el.id;b.onclick=()=>{openTab(x.el.id);sheet.classList.remove('open')};grid.appendChild(b)});
+    bn.onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.more)sheet.classList.add('open');else openTab(b.dataset.tab)};
+    sheet.onclick=e=>{if(e.target===sheet)sheet.classList.remove('open')};
+    (document.getElementById('appContent')||document.body).append(bn,sheet);
+    window._gpsBottomUpdate=id=>{[...bn.children].forEach(b=>b.classList.toggle('active',b.dataset.more?!mainIds.includes(id):b.dataset.tab===id));grid.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.tab===id))};
     let saved=null;try{saved=localStorage.getItem('gps_active_tab')}catch(e){}
     openTab(sections.some(x=>x.el.id===saved)?saved:sections[0].el.id);
   }
@@ -773,8 +815,8 @@ function renderTable(){
  const rows=data.subjects.map((s,i)=>({...s,i})).filter(s=>(sf==='todos'||s.status===sf)&&(cf==='todos'||s.classification===cf)&&((s.discipline+' '+s.topic).toLowerCase().includes(q)));
  if(!rows.length){document.getElementById('tableWrap').innerHTML='<div class="empty">Nenhum assunto encontrado.</div>';return}
  const rv=(s,n)=>`<label class="review-item">R${n+1} <input type="date" value="${esc(s.reviewDates[n])}" onchange="setReview(${s.i},${n},this.value)"><input type="checkbox" ${s.reviewDone[n]?'checked':''} onchange="setReviewDone(${s.i},${n},this.checked)"></label>`;
- let h='<table><thead><tr><th>#</th><th>Disciplina</th><th>Assunto</th><th>Status</th><th>3 revisões</th><th>Classificação</th><th>Questões</th><th>Ação</th></tr></thead><tbody>';
- rows.forEach(s=>{const qp=questionPct(s);h+=`<tr id="row-${s.i}"><td>${s.i+1}</td><td><b>${esc(s.discipline)}</b></td><td>${esc(s.topic)}${s.studyDate?`<div class="history">Estudado em ${formatDate(s.studyDate)}</div>`:''}</td><td><select onchange="setStatus(${s.i},this.value)"><option value="pendente" ${s.status==='pendente'?'selected':''}>🔴 Não estudado</option><option value="estudando" ${s.status==='estudando'?'selected':''}>🔵 Estudando</option><option value="estudado" ${s.status==='estudado'?'selected':''}>🟢 Estudado</option></select></td><td><div class="review-box">${rv(s,0)}${rv(s,1)}${rv(s,2)}</div></td><td><select class="obs-select ${classificationClass(s.classification)}" onchange="setClassification(${s.i},this.value);this.className='obs-select '+classificationClass(this.value)"><option value="" ${!s.classification?'selected':''}>Classificação</option><option value="dominio" ${s.classification==='dominio'?'selected':''}>🟢 Domínio</option><option value="revisar" ${s.classification==='revisar'?'selected':''}>🟡 Revisar</option><option value="fraco" ${s.classification==='fraco'?'selected':''}>🔴 Fraco</option></select><input style="margin-top:4px;font-size:11px;padding:6px" value="${escAttr(s.notes)}" placeholder="Observação opcional" onchange="setNotes(${s.i},this.value)"></td><td>${s.questions.total?`${s.questions.correct}/${s.questions.total}<br><b>${qp}%</b>`:'—'}</td><td><div class="actions"><button class="btn ${hasSummary(s)?'green':'light'}" onclick="openSummary('${s.id}')">📄 ${hasSummary(s)?'Ver resumo':'Resumo'}</button><button class="btn danger" onclick="removeSubject(${s.i})">🗑 Excluir</button></div></td></tr>`});
+ let h='<table class="tbl-edital"><thead><tr><th>#</th><th>Disciplina</th><th>Assunto</th><th>Status</th><th>3 revisões</th><th>Classificação</th><th>Questões</th><th>Ação</th></tr></thead><tbody>';
+ rows.forEach(s=>{const qp=questionPct(s);h+=`<tr id="row-${s.i}"><td>${s.i+1}</td><td data-l="Disciplina"><b>${esc(s.discipline)}</b></td><td data-l="Assunto">${esc(s.topic)}${s.studyDate?`<div class="history">Estudado em ${formatDate(s.studyDate)}</div>`:''}</td><td data-l="Status"><select onchange="setStatus(${s.i},this.value)"><option value="pendente" ${s.status==='pendente'?'selected':''}>🔴 Não estudado</option><option value="estudando" ${s.status==='estudando'?'selected':''}>🔵 Estudando</option><option value="estudado" ${s.status==='estudado'?'selected':''}>🟢 Estudado</option></select></td><td data-l="Revisões"><div class="review-box">${rv(s,0)}${rv(s,1)}${rv(s,2)}</div></td><td data-l="Classificação"><select class="obs-select ${classificationClass(s.classification)}" onchange="setClassification(${s.i},this.value);this.className='obs-select '+classificationClass(this.value)"><option value="" ${!s.classification?'selected':''}>Classificação</option><option value="dominio" ${s.classification==='dominio'?'selected':''}>🟢 Domínio</option><option value="revisar" ${s.classification==='revisar'?'selected':''}>🟡 Revisar</option><option value="fraco" ${s.classification==='fraco'?'selected':''}>🔴 Fraco</option></select><input style="margin-top:4px;font-size:11px;padding:6px" value="${escAttr(s.notes)}" placeholder="Observação opcional" onchange="setNotes(${s.i},this.value)"></td><td data-l="Questões">${s.questions.total?`${s.questions.correct}/${s.questions.total}<br><b>${qp}%</b>`:'—'}</td><td data-l="Ações"><div class="actions"><button class="btn ${hasSummary(s)?'green':'light'}" onclick="openSummary('${s.id}')">📄 ${hasSummary(s)?'Ver resumo':'Resumo'}</button><button class="btn danger" onclick="removeSubject(${s.i})">🗑 Excluir</button></div></td></tr>`});
  document.getElementById('tableWrap').innerHTML=h+'</tbody></table>';
 }
 
