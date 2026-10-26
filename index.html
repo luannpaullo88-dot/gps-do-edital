@@ -355,6 +355,10 @@ document.addEventListener('DOMContentLoaded',updateAuthUI);
 
 <div class="section card" data-tab="dados">
 <h2>🗑️ Gerenciar dados</h2>
+<h3 class="today-title">☁️ Armazenamento</h3>
+<p class="muted" id="storageInfo"></p>
+<button type="button" class="btn light" onclick="migrateImages()">☁️ Mover imagens dos resumos para o Storage</button>
+<hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
 <p class="muted">Apaga assuntos, questões e resumos <b>somente do edital atual</b> (no perfil mestre, do perfil marcado no seletor do topo). Outros editais e perfis não são afetados. Para remover o edital inteiro, use o botão 🗑️ Excluir no topo da página.</p>
 <button class="btn danger" onclick="clearAll()">Apagar os dados do edital atual</button>
 </div>
@@ -416,6 +420,7 @@ function emptyData(){return{examName:'',examDate:'',dailyGoal:20,weights:{},subj
 const OK_TAGS=new Set(['B','STRONG','I','EM','U','S','STRIKE','MARK','SPAN','P','DIV','BR','UL','OL','LI','H2','H3','BLOCKQUOTE','IMG','TABLE','THEAD','TBODY','TR','TD','TH']);
 const SKIP_TAGS=new Set(['SCRIPT','STYLE','IFRAME','OBJECT','EMBED','TEMPLATE','NOSCRIPT','SVG','MATH']);
 const COLOR_RE=/^(#[0-9a-f]{3,8}|rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(,\s*[\d.]+\s*)?\))$/i;
+const SP_RE=/^[\w-]{8,64}\/[\w.-]{8,100}$/;
 const IMG_RE=/^data:image\/(png|jpeg|jpg|webp|gif);base64,[a-z0-9+\/=]+$/i;
 function cleanStyle(st){const o=[];String(st||'').split(';').forEach(p=>{const i=p.indexOf(':');if(i<0)return;const k=p.slice(0,i).trim().toLowerCase(),v=p.slice(i+1).trim();if((k==='color'||k==='background-color')&&COLOR_RE.test(v))o.push(k+':'+v);else if(k==='width'&&/^\d{1,4}(\.\d+)?(px|%)$/.test(v))o.push(k+':'+v);else if(k==='text-align'&&/^(left|center|right|justify)$/.test(v))o.push(k+':'+v)});return o.join(';')}
 function sanitizeHtml(html){
@@ -428,7 +433,7 @@ function sanitizeHtml(html){
   if(SKIP_TAGS.has(tag))return;
   if(!OK_TAGS.has(tag)){copy(n,dst);return}
   const el=document.createElement(tag);
-  if(tag==='IMG'){const u=n.getAttribute('src')||'';if(!IMG_RE.test(u))return;el.setAttribute('src',u);el.setAttribute('alt','')}
+  if(tag==='IMG'){const sp=n.getAttribute('data-sp')||'',u=n.getAttribute('src')||'';if(SP_RE.test(sp)){el.setAttribute('data-sp',sp);el.setAttribute('alt','')}else if(IMG_RE.test(u)){el.setAttribute('src',u);el.setAttribute('alt','')}else return}
   else{const st=cleanStyle(n.getAttribute('style'));if(st)el.setAttribute('style',st);if(tag==='TD'||tag==='TH')['colspan','rowspan'].forEach(a=>{const v=n.getAttribute(a);if(/^\d{1,2}$/.test(v||''))el.setAttribute(a,v)});if(tag!=='BR')copy(n,el)}
   dst.appendChild(el);
  })};
@@ -481,7 +486,7 @@ let store,data;
 function activeEd(){return store.editais.find(e=>e.id===store.activeId)}
 function setStore(st){store=st;data=activeEd().data}
 try{setStore(normalizeStore(JSON.parse(localStorage.getItem(KEY)||'null')))}catch(e){setStore(normalizeStore(null))}
-let currentUserId=null,cloudReady=false,cloudLoadingUserId=null,cloudSaveTimer=null,cloudSaving=false,pendingSave=false,dirty=false;
+let currentUserId=null,cloudReady=false,cloudLoadingUserId=null,cloudSaveTimer=null,cloudSaving=false,pendingSave=false,dirty=false,lastUpdatedAt=null,forceOverwrite=false,conflictFlag=false;
 let gpsIsMaster=false,gpsSignedInUserId=null,gpsMasterProfiles=[];
 
 function resetSessionState(){
@@ -527,12 +532,12 @@ async function loadCloudData(userId){
  cloudLoadingUserId=userId;cloudReady=false;currentUserId=userId;dirty=false;
  setCloudStatus('☁️ Carregando dados...');
  try{
-  const {data:row,error}=await supabaseClient.from('user_study_data').select('payload').eq('user_id',userId).maybeSingle();
+  const {data:row,error}=await supabaseClient.from('user_study_data').select('payload,updated_at').eq('user_id',userId).maybeSingle();
   if(error)throw error;
-  if(row&&row.payload){setStore(normalizeStore(row.payload))}
+  if(row&&row.payload){setStore(normalizeStore(row.payload));lastUpdatedAt=row.updated_at||null}
   else{
    setStore(normalizeStore(null));
-   const {error:ie}=await supabaseClient.from('user_study_data').insert({user_id:userId,payload:store});
+   const {data:ins,error:ie}=await supabaseClient.from('user_study_data').insert({user_id:userId,payload:store}).select('updated_at').maybeSingle();lastUpdatedAt=(ins&&ins.updated_at)||null;
    if(ie)throw ie;
   }
   localStorage.setItem(KEY,JSON.stringify(store));
@@ -550,14 +555,20 @@ async function saveCloudData(){
  const uid=currentUserId;
  setCloudStatus('☁️ Salvando...');
  try{
-  const {error}=await supabaseClient.from('user_study_data').upsert({user_id:uid,payload:store,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+  const now=new Date().toISOString();
+  let q=supabaseClient.from('user_study_data').update({payload:store,updated_at:now}).eq('user_id',uid);
+  if(lastUpdatedAt&&!forceOverwrite)q=q.eq('updated_at',lastUpdatedAt);
+  const {data:upd,error}=await q.select('updated_at');
   if(error)throw error;
+  if(upd&&upd.length)lastUpdatedAt=upd[0].updated_at;
+  else if(lastUpdatedAt&&!forceOverwrite){dirty=true;conflictFlag=true;setCloudStatus('⚠️ Conflito: dados alterados em outro dispositivo',true);return}
+  else{const {data:u2,error:e2}=await supabaseClient.from('user_study_data').upsert({user_id:uid,payload:store,updated_at:now},{onConflict:'user_id'}).select('updated_at');if(e2)throw e2;lastUpdatedAt=(u2&&u2[0]&&u2[0].updated_at)||now}
   setCloudStatus('☁️ Dados sincronizados');
  }catch(error){
   dirty=true;setCloudStatus('⚠️ Erro ao salvar',true);console.error('Erro ao salvar dados no Supabase:',error);
  }finally{
   cloudSaving=false;
-  if(pendingSave){pendingSave=false;saveCloudData()}
+  if(conflictFlag){conflictFlag=false;pendingSave=false;handleConflict()}else if(pendingSave){pendingSave=false;saveCloudData()}
  }
 }
 function scheduleCloudSave(){
@@ -785,7 +796,7 @@ function openSummary(id,review,mode){
  const s=byId(id);if(!s)return;
  sumId=id;sumReview=review===undefined?null:review;sumDirty=false;sumRange=null;
  document.getElementById('sumTitle').textContent=s.discipline+' — '+s.topic;
- sumEd().innerHTML=sanitizeHtml(s.summary||'');
+ sumEd().innerHTML=sanitizeHtml(s.summary||'');resolveImages(sumEd());
  document.getElementById('sumDone').style.display=sumReview===null?'none':'';
  setSumMode(mode||'edit');document.getElementById('sumModal').classList.add('open');document.body.style.overflow='hidden';
 }
@@ -813,10 +824,10 @@ function sumAddImage(f){
  if(!/^image\//.test(f.type)){toast('O arquivo não é uma imagem.',true);return}
  const r=new FileReader();
  r.onload=()=>{const im=new Image();
-  im.onload=()=>{const k=Math.min(1,900/Math.max(im.width,im.height)),c=document.createElement('canvas');
+  im.onload=()=>{const k=Math.min(1,1400/Math.max(im.width,im.height)),c=document.createElement('canvas');
    c.width=Math.max(1,Math.round(im.width*k));c.height=Math.max(1,Math.round(im.height*k));
    const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(im,0,0,c.width,c.height);
-   restoreRange();document.execCommand('insertImage',false,c.toDataURL('image/jpeg',0.72));sumDirty=true;keepRange()};
+   sumPlaceImage(c)};
   im.onerror=()=>toast('Não foi possível ler a imagem.',true);im.src=r.result};
  r.readAsDataURL(f);
 }
@@ -841,6 +852,7 @@ const sumOpenDiscs=new Set();let sumOpenItem=null;
 function toggleSumDisc(el){if(el.open)sumOpenDiscs.add(el.dataset.d);else sumOpenDiscs.delete(el.dataset.d)}
 function toggleSumItem(id){const s=byId(id);if(!s)return;if(sumOpenItem===id)sumOpenItem=null;else{sumOpenItem=id;sumOpenDiscs.add(s.discipline)}renderSummariesTab()}
 function renderSummariesTab(){
+ updateStorageInfo();
  const box=document.getElementById('summariesView'),cnt=document.getElementById('sumCount');if(!box)return;
  const withSum=data.subjects.filter(hasSummary);
  if(!withSum.length){cnt.textContent='';box.innerHTML='<div class="empty">Você ainda não escreveu nenhum resumo. Na aba "Verticalização completa do edital", use o botão 📄 Resumo em cada assunto.</div>';return}
@@ -852,6 +864,7 @@ function renderSummariesTab(){
   return `<details class="sum-disc" data-d="${esc(d)}" ${sumOpenDiscs.has(d)?'open':''} ontoggle="toggleSumDisc(this)"><summary>${esc(d)} <span class="muted">(${list.length})</span></summary>`+
   list.map(s=>{const open=s.id===sumOpenItem;return `<div class="sum-item"><div class="sum-item-head" style="cursor:pointer" onclick="toggleSumItem('${s.id}')"><b>${open?'▾':'▸'} ${esc(s.topic)}</b><span class="actions"><span class="muted">${lbl[s.status]||''}</span><button class="btn light" style="padding:6px 10px;font-size:12px" onclick="event.stopPropagation();openSummary('${s.id}',null,'read')">👁️ Ler</button><button class="btn light" style="padding:6px 10px;font-size:12px" onclick="event.stopPropagation();openSummary('${s.id}')">✏️ Editar</button></span></div>${open?`<div class="rt-editor sum-view">${sanitizeHtml(s.summary)}</div>`:''}</div>`}).join('')+'</details>';
  }).join('');
+ resolveImages(box);
 }
 
 function sumInsertTable(){
@@ -933,6 +946,57 @@ function hlPick(c){
  ed.addEventListener('touchend',()=>setTimeout(hlApply,120));
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&hlActive){hlSet(null);e.stopImmediatePropagation()}},true);
 })();
+
+const imgCache=new Map(),BUCKET='resumos';
+async function resolveImages(root){
+ const imgs=[...root.querySelectorAll('img[data-sp]')];if(!imgs.length)return;
+ const now=Date.now(),need=[...new Set(imgs.map(i=>i.dataset.sp).filter(x=>{const c=imgCache.get(x);return !c||c.exp<now}))];
+ if(need.length){try{const {data:d,error}=await supabaseClient.storage.from(BUCKET).createSignedUrls(need,3600);if(!error&&d)d.forEach(x=>{if(x.signedUrl)imgCache.set(x.path,{url:x.signedUrl,exp:now+3300000})})}catch(e){console.error(e)}}
+ imgs.forEach(i=>{const c=imgCache.get(i.dataset.sp);if(c)i.src=c.url;else i.alt='Imagem indisponível'});
+}
+async function uploadBlob(blob){
+ const ext={'image/png':'png','image/webp':'webp'}[blob.type]||'jpg',path=currentUserId+'/'+newId()+newId()+'.'+ext;
+ const {error}=await supabaseClient.storage.from(BUCKET).upload(path,blob,{contentType:blob.type||'image/jpeg',upsert:false});
+ if(error)throw error;return path;
+}
+async function sumPlaceImage(c){
+ toast('⏳ Enviando imagem...');
+ let path=null,url=null;
+ try{
+  const blob=await new Promise(r=>c.toBlob(r,'image/jpeg',0.8));
+  if(!blob||!cloudReady||!currentUserId)throw Error('sem upload');
+  path=await uploadBlob(blob);
+  const {data:d,error}=await supabaseClient.storage.from(BUCKET).createSignedUrl(path,3600);
+  if(error||!d)throw error||Error('url');
+  url=d.signedUrl;imgCache.set(path,{url,exp:Date.now()+3300000});
+ }catch(e){console.error(e);path=null;url=c.toDataURL('image/jpeg',0.72);toast('⚠️ Não foi possível usar o Storage; imagem embutida nos dados. Rode o SQL de configuração.',true)}
+ restoreRange();document.execCommand('insertImage',false,url);
+ if(path){const el=[...sumEd().querySelectorAll('img')].find(i=>i.getAttribute('src')===url);if(el)el.setAttribute('data-sp',path)}
+ sumDirty=true;keepRange();
+}
+async function migrateImages(){
+ if(!cloudReady||!currentUserId){alert('Aguarde a sincronização terminar.');return}
+ let n=0,fail=0;toast('⏳ Movendo imagens...');
+ for(const ed of store.editais)for(const sj of ed.data.subjects){
+  if(!/src="data:image\//.test(sj.summary||''))continue;
+  const box=document.createElement('div');box.innerHTML=sj.summary;
+  for(const im of box.querySelectorAll('img')){
+   const u=im.getAttribute('src')||'';if(!u.startsWith('data:image/'))continue;
+   try{const blob=await (await fetch(u)).blob();const path=await uploadBlob(blob);im.removeAttribute('src');im.setAttribute('data-sp',path);n++}catch(e){console.error(e);fail++}
+  }
+  sj.summary=sanitizeHtml(box.innerHTML);
+ }
+ save();toast(fail?`⚠️ ${n} movida(s), ${fail} falharam (rode o SQL de configuração?)`:`✅ ${n} imagem(ns) movida(s) para o Storage.`,!!fail);
+}
+function updateStorageInfo(){
+ const e=document.getElementById('storageInfo');if(!e||!store)return;
+ let img=0;store.editais.forEach(ed=>ed.data.subjects.forEach(s=>{img+=((s.summary||'').match(/src="data:image/g)||[]).length}));
+ e.innerHTML='Dados na nuvem: <b>'+Math.round(JSON.stringify(store).length/1024)+' KB</b>'+(img?' • <b>'+img+'</b> imagem(ns) ainda dentro dos dados (use o botão abaixo para movê-las).':' • nenhuma imagem pesada dentro dos dados ✅');
+}
+async function handleConflict(){
+ if(confirm('Seus dados foram alterados em outro dispositivo.\n\nOK = recarregar a versão da nuvem (suas últimas alterações neste aparelho serão descartadas).\nCancelar = manter a SUA versão e sobrescrever a nuvem.')){location.reload();return}
+ forceOverwrite=true;await saveCloudData();forceOverwrite=false;
+}
 render();
 </script>
 </body>
