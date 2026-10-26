@@ -270,14 +270,6 @@ document.addEventListener('DOMContentLoaded',updateAuthUI);
 <div id="appContent" style="display:none;">
 <div class="container">
 
-<div class="card edital-bar">
-<label for="editalSelect">📚 Edital</label>
-<select id="editalSelect" onchange="switchEdital(this.value)"></select>
-<button type="button" class="btn light" onclick="newEdital()">➕ Novo edital</button>
-<button type="button" class="btn light" onclick="renameEdital()">✏️ Renomear</button>
-<button type="button" class="btn danger" onclick="deleteEdital()">🗑️ Excluir</button>
-</div>
-
 <div class="grid">
 <div class="card stat"><span class="muted">⏳ Faltam para a prova</span><b id="days">—</b><span class="muted" id="examLabel">Defina a data</span></div>
 <div class="card stat" onclick="openGpsTab('gps-tab-edital')" title="Abrir a verticalização do edital"><span class="muted">📊 Progresso do edital</span><b id="progressText">0%</b><div class="progress"><span id="progressBar" style="width:0%"></span></div></div>
@@ -287,6 +279,16 @@ document.addEventListener('DOMContentLoaded',updateAuthUI);
 
 <div class="section card" data-tab="config">
 <h2>⚙️ Configuração da prova</h2>
+<h3 class="today-title">📚 Meus editais</h3>
+<p class="muted" style="margin-top:0">Cada edital tem seus próprios assuntos, questões, resumos e data da prova. Escolha qual está ativo ou crie um novo.</p>
+<div class="edital-bar">
+<select id="editalSelect" onchange="switchEdital(this.value)" aria-label="Edital ativo"></select>
+<button type="button" class="btn light" onclick="newEdital()">➕ Novo edital</button>
+<button type="button" class="btn light" onclick="renameEdital()">✏️ Renomear</button>
+<button type="button" class="btn danger" onclick="deleteEdital()">🗑️ Excluir</button>
+</div>
+<hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+<h3 class="today-title">🗓️ Dados da prova</h3>
 <div class="row">
 <div class="field"><label class="small">Nome do concurso</label><input id="examName" placeholder="Ex.: PMSE CFP 2026"></div>
 <div class="field"><label class="small">Data da prova</label><input id="examDate" type="date"></div>
