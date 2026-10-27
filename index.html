@@ -399,7 +399,7 @@ Raciocínio Lógico — Proposições"></textarea>
 <h2>🧠 Aprender</h2>
 <div id="learnQuiz" style="display:none"></div>
 <div id="learnHome">
-<p class="muted">Cadastre <b>conceito — definição</b> de um assunto, um por linha. O sistema monta 4 rodadas: nas 2 primeiras você escolhe a definição certa entre 5 alternativas; nas 2 últimas vê o conceito e escreve a definição igual. Ao acertar a rodada 4, o conceito fica ✅ aprendido.</p>
+<p class="muted">Cadastre <b>conceito — definição</b> de um assunto, um por linha. O sistema monta 4 rodadas: na <b>1ª</b> você vê a definição e marca o conceito (5 alternativas); na <b>2ª</b> vê o conceito e marca a definição (5 alternativas); nas <b>3ª e 4ª</b> vê o conceito e escreve a definição com as <b>palavras-chave</b> (não precisa ser igual). Ao acertar a rodada 4, o conceito fica ✅ aprendido.</p>
 <div class="row">
 <div class="field"><label class="small">Assunto do edital</label><select id="lrnSubject"></select></div>
 </div>
@@ -1116,50 +1116,78 @@ function renderLearnTab(){
 }
 function startLearn(sid){
  const n=lrnRoundOf(sid);if(!n)return;
- if(n<=2&&new Set(data.learn.map(x=>x.def)).size<5){alert('Para o quiz de 5 alternativas é preciso ter pelo menos 5 definições diferentes cadastradas (somando todos os assuntos do edital). Adicione mais conceitos.');return}
+ const f=n===1?'concept':'def';
+ if(n<=2&&new Set(data.learn.map(x=>lrnNorm(x[f]))).size<5){alert('Para o quiz de 5 alternativas é preciso ter pelo menos 5 '+(n===1?'conceitos':'definições')+' diferentes cadastrados (somando todos os assuntos do edital). Adicione mais.');return}
  const q=lrnQueue(sid,n).map(x=>x.id);
  learnState={ed:store.activeId,sid,round:n,queue:shuffle(q),total:q.length,hits:0,misses:0,opts:null,busy:false};
  lrnShow();
 }
 function lrnCur(){return data.learn.find(x=>x.id===learnState.queue[0])}
-function lrnOptions(it){
- const others=[...new Set(data.learn.filter(x=>x.def!==it.def).map(x=>x.def))];
- const same=shuffle(others.filter(d=>data.learn.some(x=>x.sid===it.sid&&x.def===d))),rest=shuffle(others.filter(d=>!same.includes(d)));
- return shuffle([it.def,...same.concat(rest).slice(0,4)]);
+function lrnField(){return learnState.round===1?'concept':'def'}
+function lrnOptions(it,f){
+ const others=[...new Set(data.learn.filter(x=>lrnNorm(x[f])!==lrnNorm(it[f])).map(x=>x[f]))];
+ const same=shuffle(others.filter(d=>data.learn.some(x=>x.sid===it.sid&&x[f]===d))),rest=shuffle(others.filter(d=>!same.includes(d)));
+ return shuffle([it[f],...same.concat(rest).slice(0,4)]);
+}
+/* palavras-chave: ignora acentos, maiúsculas, palavras comuns e variações (usa o radical) */
+const LRN_STOP=new Set('para pelo pela pelos pelas sobre entre como mais menos esse essa esses essas este esta estes estas isso isto cujo cuja cujos cujas quando onde qual quais tambem ainda sendo pode podem deve devem seus suas dele dela deles delas mesmo mesma quem cada toda todo todos todas muito pois porque entao assim aquele aquela nesse nessa neste nesta desde durante contra perante apenas somente qualquer outro outra outros outras seja sejam foi eram era'.split(' '));
+function lrnNormWord(w){return w.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()}
+function lrnStem(w){return w.length>5?w.slice(0,5):w}
+function lrnKeys(def){
+ const toks=(String(def||'').match(/[\p{L}\p{N}]+/gu)||[]).map(o=>({o,n:lrnNormWord(o)}));
+ let c=toks.filter(t=>t.n.length>=4&&!LRN_STOP.has(t.n));if(!c.length)c=toks.filter(t=>t.n.length>=2);
+ const m=new Map();c.forEach(t=>{const st=lrnStem(t.n);if(!m.has(st))m.set(st,t.o)});
+ let a=[...m.entries()].map(([st,o])=>({st,o}));
+ if(a.length>8)a=a.sort((x,y)=>y.o.length-x.o.length).slice(0,8);
+ return a;
+}
+function lrnNeed(k){return Math.max(1,Math.ceil(k*0.6))}
+function lrnGrade(ans,def){
+ const keys=lrnKeys(def);
+ if(!keys.length)return{ok:lrnNorm(ans)===lrnNorm(def),keys:[],hit:[],need:0,n:0};
+ const have=new Set((String(ans||'').match(/[\p{L}\p{N}]+/gu)||[]).map(w=>lrnStem(lrnNormWord(w))));
+ const hit=keys.map(k=>have.has(k.st)),n=hit.filter(Boolean).length,need=lrnNeed(keys.length);
+ return{ok:n>=need,keys,hit,need,n};
 }
 function lrnShow(){
  const L=learnState,qz=document.getElementById('learnQuiz');
  document.getElementById('learnHome').style.display='none';qz.style.display='';L.busy=false;
  if(!L.queue.length){lrnEnd();return}
- const it=lrnCur(),mc=L.round<=2;
- if(mc&&!L.opts)L.opts=lrnOptions(it);
- qz.innerHTML=`<div class="actions" style="justify-content:space-between;align-items:center"><b>Rodada ${L.round}/4 • ${mc?'Escolha a definição':'Escreva a definição'}</b><button class="btn light" onclick="lrnExit()">✖ Sair</button></div>
+ const it=lrnCur(),mc=L.round<=2,f=lrnField();
+ if(mc&&!L.opts)L.opts=lrnOptions(it,f);
+ const title=L.round===1?'Escolha o conceito':L.round===2?'Escolha a definição':'Escreva a definição (palavras-chave)';
+ const shown=L.round===1?['Definição',it.def]:['Conceito',it.concept];
+ const k=lrnKeys(it.def).length;
+ qz.innerHTML=`<div class="actions" style="justify-content:space-between;align-items:center"><b>Rodada ${L.round}/4 • ${title}</b><button class="btn light" onclick="lrnExit()">✖ Sair</button></div>
  <div class="progress" style="margin:10px 0"><span style="width:${Math.round(L.hits/L.total*100)}%"></span></div>
  <p class="muted">${L.hits}/${L.total} corretos nesta rodada • restam ${L.queue.length}</p>
- <div class="metric" style="margin:10px 0"><span class="muted">Conceito</span><strong style="font-size:20px">${esc(it.concept)}</strong></div>`+
+ <div class="metric" style="margin:10px 0"><span class="muted">${shown[0]}</span><strong style="font-size:${L.round===1?16:20}px;font-weight:600">${esc(shown[1])}</strong></div>`+
  (mc?L.opts.map((o,i)=>`<button type="button" class="btn light lrn-opt" onclick="lrnPick(${i})">${'ABCDE'[i]}) ${esc(o)}</button>`).join('')
- :`<textarea id="lrnAns" placeholder="Escreva a definição igual à cadastrada..." style="min-height:120px"></textarea><div class="actions" style="margin-top:8px"><button class="btn" onclick="lrnCheck()">Conferir</button></div>`)+'<div id="lrnFb" style="margin-top:12px"></div>';
+ :`<p class="muted">Escreva a definição com as ideias principais. Não precisa ser igual: basta citar pelo menos <b>${lrnNeed(k)}</b> das <b>${k}</b> palavras-chave.</p><textarea id="lrnAns" placeholder="Escreva a definição..." style="min-height:120px"></textarea><div class="actions" style="margin-top:8px"><button class="btn" onclick="lrnCheck()">Conferir</button></div>`)+'<div id="lrnFb" style="margin-top:12px"></div>';
  const a=document.getElementById('lrnAns');if(a)a.focus();
 }
 function lrnPick(i){
- const L=learnState;if(!L||L.busy)return;const it=lrnCur(),ok=L.opts[i]===it.def;
- document.querySelectorAll('.lrn-opt').forEach((b,k)=>{b.disabled=true;if(L.opts[k]===it.def)b.classList.add('ok');else if(k===i)b.classList.add('bad')});
- lrnResolve(ok,ok?'':'');
+ const L=learnState;if(!L||L.busy)return;const it=lrnCur(),f=lrnField(),ok=L.opts[i]===it[f];
+ document.querySelectorAll('.lrn-opt').forEach((b,k)=>{b.disabled=true;if(L.opts[k]===it[f])b.classList.add('ok');else if(k===i)b.classList.add('bad')});
+ lrnResolve(ok,ok?'':`<p><b>${L.round===1?'Conceito':'Definição'} correto${L.round===1?'':'a'}:</b> ${esc(it[f])}</p>`);
 }
 function lrnCheck(){
- const L=learnState;if(!L||L.busy)return;const it=lrnCur(),el=document.getElementById('lrnAns'),ok=lrnNorm(el.value)===lrnNorm(it.def);
- el.readOnly=true;lrnResolve(ok,ok?'':`<p><b>Sua resposta:</b> ${esc(el.value)||'(vazio)'}</p><p><b>Definição correta:</b> ${esc(it.def)}</p>`);
+ const L=learnState;if(!L||L.busy)return;const it=lrnCur(),el=document.getElementById('lrnAns'),g=lrnGrade(el.value,it.def);
+ el.readOnly=true;
+ const kw=g.keys.length?`<p><b>Palavras-chave:</b> ${g.keys.map((k,i)=>(g.hit[i]?'✅ ':'❌ ')+esc(k.o)).join(' &nbsp; ')}</p><p class="muted">Você citou ${g.n} de ${g.keys.length} (mínimo: ${g.need}).</p>`:'';
+ lrnResolve(g.ok,kw+`<p><b>Definição completa:</b> ${esc(it.def)}</p>`);
 }
 function lrnResolve(ok,extra){
  const L=learnState,it=lrnCur();L.busy=true;L.opts=null;
  if(ok){it.r[L.round-1]=true;L.hits++;L.queue.shift()}else{it.miss++;L.misses++;L.queue.push(L.queue.shift())}
  persist();
- document.getElementById('lrnFb').innerHTML=`<div class="metric"><b>${ok?'✅ Correto!':'❌ Não foi dessa vez.'}</b>${ok?'':'<p class="muted" style="margin:6px 0">Esse conceito volta no fim da rodada.</p>'}${extra}${!ok&&L.round<=2?`<p><b>Definição correta:</b> ${esc(it.def)}</p>`:''}<button class="btn" style="margin-top:8px" onclick="lrnShow()">Próxima ➡️</button></div>`;
+ document.getElementById('lrnFb').innerHTML=`<div class="metric"><b>${ok?'✅ Correto!':'❌ Não foi dessa vez.'}</b>${ok?'':'<p class="muted" style="margin:6px 0">Esse conceito volta no fim da rodada.</p>'}${extra}<button class="btn" style="margin-top:8px" onclick="lrnShow()">Próxima ➡️</button></div>`;
 }
 function lrnEnd(){
  const L=learnState,qz=document.getElementById('learnQuiz'),next=lrnRoundOf(L.sid),n=lrnItems(L.sid).length;
+ const what=['','marcar o conceito','marcar a definição','escrever a definição com as palavras-chave','escrever a definição com as palavras-chave'];
  qz.innerHTML=`<h3>🎉 Rodada ${L.round} concluída!</h3><p>${L.misses?L.misses+' erro(s) nesta rodada.':'Nenhum erro nesta rodada!'}</p>`+
- (next?`<p>Próxima: rodada ${next}/4 (${next<=2?'múltipla escolha':'escrever a definição'}).</p><div class="actions"><button class="btn" onclick="startLearn('${L.sid}')">▶️ Iniciar rodada ${next}</button><button class="btn light" onclick="lrnExit()">Voltar</button></div>`
+ (next?`<p>Próxima: rodada ${next}/4 (${what[next]}).</p><div class="actions"><button class="btn" onclick="startLearn('${L.sid}')">▶️ Iniciar rodada ${next}</button><button class="btn light" onclick="lrnExit()">Voltar</button></div>`
  :`<p>🏆 Você concluiu as 4 rodadas! <b>${n}</b> conceito(s) agora estão classificados como ✅ <b>aprendido</b>.</p><div class="actions"><button class="btn" onclick="lrnExit()">Voltar</button></div>`);
 }
 function lrnExit(){learnState=null;render()}
