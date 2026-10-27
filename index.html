@@ -424,7 +424,7 @@ Raciocínio Lógico — Proposições"></textarea>
 <textarea id="lrnBulk" style="margin-top:10px;min-height:120px" placeholder="Peculato — Apropriação de dinheiro, valor ou bem móvel público por funcionário público
 Concussão — Exigir vantagem indevida em razão da função"></textarea>
 <div class="actions" style="margin-top:10px"><button class="btn green" onclick="addConcepts()">➕ Adicionar conceitos</button></div>
-<h3 class="today-title" style="margin-top:22px">📚 Meus conceitos por assunto</h3>
+<h3 class="today-title" style="margin-top:22px">📚 Meus conceitos por matéria</h3>
 <div id="learnList"></div>
 </div>
 </div>
@@ -1119,21 +1119,25 @@ function renderLearnTab(){
  if(learnState)return;
  qz.style.display='none';home.style.display='';
  const sel=document.getElementById('lrnSubject'),cur=sel.value;
- sel.innerHTML=data.subjects.map(x=>`<option value="${esc(x.id)}">${esc(x.discipline)} — ${esc(x.topic)}</option>`).join('');
+ sel.innerHTML=[...lrnGroups(data.subjects)].map(([d,l])=>`<optgroup label="${esc(d)}">`+l.map(x=>`<option value="${esc(x.id)}">${esc(x.topic)}</option>`).join('')+'</optgroup>').join('');
  if(cur&&byId(cur))sel.value=cur;
  const sc=document.getElementById('lrnScope'),scv=sc.value,s0=[...new Set(data.learn.map(x=>x.sid))].filter(byId);
- sc.innerHTML='<option value="">Todos os assuntos com conceitos</option>'+s0.map(id=>{const x=byId(id);return `<option value="${esc(id)}">${esc(x.discipline)} — ${esc(x.topic)}</option>`}).join('');
- if(scv&&byId(scv))sc.value=scv;updateLrnDue();
+ sc.innerHTML='<option value="">Todas as matérias</option>'+[...lrnGroups(s0.map(byId))].map(([d,l])=>`<optgroup label="${esc(d)}"><option value="d:${esc(d)}">📚 Toda a matéria: ${esc(d)}</option>`+l.map(x=>`<option value="${esc(x.id)}">${esc(x.topic)}</option>`).join('')+'</optgroup>').join('');
+ if(scv&&[...sc.options].some(o=>o.value===scv))sc.value=scv;updateLrnDue();
  const sids=[...new Set(data.learn.map(x=>x.sid))].filter(byId),box=document.getElementById('learnList');
  if(!sids.length){box.innerHTML='<div class="empty">Nenhum conceito cadastrado ainda.</div>';return}
- box.innerHTML=sids.map(sid=>{
+ const cardOf=sid=>{
   const sj=byId(sid),it=lrnItems(sid),ln=it.filter(x=>x.r[3]).length,r=lrnRoundOf(sid),pct=Math.round(ln/it.length*100),open=lrnOpen.has(sid);
   return `<div class="sum-item" id="lrn-${sid}"><div class="sum-item-head"><b>${esc(sj.discipline)} — ${esc(sj.topic)}</b><span class="muted">${r?'Rodada '+r+'/4':'🏆 Todos aprendidos'}</span></div>
   <div class="barline" style="margin:8px 0"><div class="progress"><span style="width:${pct}%"></span></div><b>${ln}/${it.length}</b></div>
   <div class="actions">${r?`<button class="btn" onclick="startLearn('${sid}')">▶️ ${r===1&&!it.some(x=>x.r[0])?'Começar':'Continuar'} (rodada ${r})</button>`:''}
   <button class="btn light" onclick="toggleLrn('${sid}')">${open?'▾':'▸'} Conceitos</button><button class="btn light" onclick="resetLearn('${sid}')">🔄 Reiniciar</button></div>
   ${open?'<div style="margin-top:10px">'+it.map(x=>`<div class="priority-item" style="margin-bottom:6px"><b>${x.r[3]?'✅ ':''}${esc(x.concept)}</b><span class="muted">${x.r[3]?'aprendido':'rodada '+(x.r.filter(Boolean).length+1)+'/4'}${x.miss?' • '+x.miss+' erro(s)':''}${x.due?' • revisão '+formatDate(x.due):''}</span><br><span>${esc(x.def)}</span><br><button class="btn danger" style="margin-top:6px;padding:4px 8px;font-size:11px" onclick="delConcept('${x.id}')">🗑 Excluir</button></div>`).join('')+'</div>':''}</div>`;
- }).join('');
+ };
+ const ord=sids.slice().sort((x,y)=>data.subjects.indexOf(byId(x))-data.subjects.indexOf(byId(y))),bySid=new Map();
+ ord.forEach(id=>{const d=byId(id).discipline;if(!bySid.has(d))bySid.set(d,[]);bySid.get(d).push(id)});
+ box.innerHTML=[...bySid].map(([d,ids])=>{const its=ids.flatMap(lrnItems),ln=its.filter(x=>x.r[3]).length;
+  return `<details class="sum-disc" data-d="${esc(d)}" ${lrnClosed.has(d)?'':'open'} ontoggle="lrnToggleDisc(this)"><summary>${esc(d)} <span class="muted">(${ids.length} assunto(s) • ${its.length} conceito(s) • ${ln} ✅ aprendido(s))</span></summary>${ids.map(cardOf).join('')}</details>`}).join('');
 }
 function startLearn(sid){
  const n=lrnRoundOf(sid);if(!n)return;
@@ -1223,7 +1227,7 @@ function srsApply(it,q){
 }
 function srsDays(it,q){const c=Object.assign({},it);srsApply(c,q);return c.ivl}
 function fmtD(d){return d<=1?'1 dia':d<30?d+' dias':Math.round(d/30)+' mês(es)'}
-function lrnScopeItems(){const v=document.getElementById('lrnScope').value;return v?lrnItems(v):data.learn.slice()}
+function lrnScopeItems(){const v=document.getElementById('lrnScope').value;if(v.startsWith('d:')){const d=v.slice(2);return data.learn.filter(x=>{const sj=byId(x.sid);return sj&&sj.discipline===d})}return v?lrnItems(v):data.learn.slice()}
 function updateLrnDue(){
  const e=document.getElementById('lrnDueInfo');if(!e)return;
  const it=lrnScopeItems(),t=today();
@@ -1338,13 +1342,16 @@ function goLearn(id){
  if(window.openGpsTab)window.openGpsTab('gps-tab-aprender');
  const has=lrnCount(id)>0,add=document.getElementById('lrnSubject'),sc=document.getElementById('lrnScope');
  if(add)add.value=id;if(has&&sc)sc.value=id;updateLrnDue();
- if(has)lrnOpen.add(id);renderLearnTab();
+ lrnClosed.delete(sj.discipline);if(has)lrnOpen.add(id);renderLearnTab();
  if(add)add.value=id;if(has&&sc)sc.value=id;updateLrnDue();
  setTimeout(()=>{
   if(has){const c=document.getElementById('lrn-'+id);if(c){c.scrollIntoView({behavior:'smooth',block:'center'});c.style.outline='3px solid #7c3aed';setTimeout(()=>{c.style.outline=''},3000)}}
   else{const b=document.getElementById('lrnBulk');if(b){b.scrollIntoView({behavior:'smooth',block:'center'});b.focus()}toast('🧠 Cole os conceitos de "'+sj.topic+'" (conceito — definição) e adicione.')}
  },350);
 }
+const lrnClosed=new Set();
+function lrnGroups(list){const m=new Map();list.forEach(x=>{if(!x)return;if(!m.has(x.discipline))m.set(x.discipline,[]);m.get(x.discipline).push(x)});return m}
+function lrnToggleDisc(el){if(el.open)lrnClosed.delete(el.dataset.d);else lrnClosed.add(el.dataset.d)}
 function lrnExit(){learnState=null;render()}
 render();
 </script>
