@@ -155,6 +155,9 @@ details.sum-disc>summary::-webkit-details-marker{display:none}details.sum-disc[o
 .hw.ok{background:#a5f3a5;color:#14532d}.hw.bad{background:#ffc9de;color:#7f1d1d}
 .fc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}.fc-grid .btn{padding:10px 4px;font-size:14px}.fc-grid small{display:block;font-weight:400;opacity:.85}
 @media(max-width:600px){.fc-grid{grid-template-columns:repeat(2,1fr)}}
+.lrn-badge{display:inline-flex;align-items:center;margin-left:6px;padding:2px 8px;font-size:12px;font-weight:700;border-radius:999px;background:var(--soft);color:var(--muted);border:1px dashed var(--line);opacity:.85;vertical-align:middle;cursor:pointer}
+.lrn-badge.on{background:#ede9fe;color:#5b21b6;border:1px solid #c4b5fd;opacity:1}
+:root[data-theme=dark] .lrn-badge.on{background:#2b1f52;color:#d8c8ff;border-color:#5b3fa8}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
@@ -793,11 +796,11 @@ function renderPriority(){
  const due=[];data.subjects.forEach(s=>s.reviewDates.forEach((d,n)=>{if(d&&d<=t&&!s.reviewDone[n])due.push({s,n,d})}));
  h+=`<h3 class="today-title">🟣 Revisões de hoje / vencidas (${due.length})</h3>`;
  if(!due.length)h+='<div class="empty">Nenhuma revisão pendente.</div>';
- else h+='<div class="priority-grid">'+due.slice(0,30).map(x=>`<div class="priority-item"><b>${x.n+1}ª revisão • ${formatDate(x.d)}</b><span>${esc(x.s.discipline)} — ${esc(x.s.topic)}</span><br><span class="actions" style="margin-top:7px"><button class="btn light" style="padding:6px 9px;font-size:12px" onclick="openSummary('${x.s.id}',${x.n},'read')">📄 Revisar</button><button class="btn green" style="padding:6px 9px;font-size:12px" onclick="doReview('${x.s.id}',${x.n})">✅ Feita</button></span></div>`).join('')+'</div>';
+ else h+='<div class="priority-grid">'+due.slice(0,30).map(x=>`<div class="priority-item"><b>${x.n+1}ª revisão • ${formatDate(x.d)}</b><span>${esc(x.s.discipline)} — ${esc(x.s.topic)}</span>${lrnBadge(x.s.id,true)}<br><span class="actions" style="margin-top:7px"><button class="btn light" style="padding:6px 9px;font-size:12px" onclick="openSummary('${x.s.id}',${x.n},'read')">📄 Revisar</button><button class="btn green" style="padding:6px 9px;font-size:12px" onclick="doReview('${x.s.id}',${x.n})">✅ Feita</button></span></div>`).join('')+'</div>';
  const al=data.subjects.filter(s=>s.classification==='fraco'||(questionPct(s)!==null&&questionPct(s)<60));
  h+=`<h3 class="today-title" style="margin-top:18px">⚠️ Alertas de desempenho (${al.length})</h3>`;
  if(!al.length)h+='<div class="empty">Nenhum assunto fraco ou abaixo de 60% em questões.</div>';
- else h+='<div class="priority-grid">'+al.slice(0,8).map(s=>{const i=data.subjects.indexOf(s),m=[];if(s.classification==='fraco')m.push('🔴 Fraco');if(questionPct(s)!==null&&questionPct(s)<60)m.push('📝 '+questionPct(s)+'% em questões');return`<div class="priority-item"><b>${m.join(' • ')}</b><span>${esc(s.discipline)} — ${esc(s.topic)}</span><br><span class="actions" style="margin-top:7px"><button class="btn light" style="padding:6px 9px;font-size:12px" onclick="openSummary('${s.id}')">📄 Resumo</button><button class="btn light" style="padding:6px 9px;font-size:12px" onclick="goQuestions('${s.id}')">📝 Registrar questões</button><button class="btn light" style="padding:6px 9px;font-size:12px" onclick="focusRow(${i})">Ver assunto</button></span></div>`}).join('')+'</div>';
+ else h+='<div class="priority-grid">'+al.slice(0,8).map(s=>{const i=data.subjects.indexOf(s),m=[];if(s.classification==='fraco')m.push('🔴 Fraco');if(questionPct(s)!==null&&questionPct(s)<60)m.push('📝 '+questionPct(s)+'% em questões');return`<div class="priority-item"><b>${m.join(' • ')}</b><span>${esc(s.discipline)} — ${esc(s.topic)}</span>${lrnBadge(s.id,true)}<br><span class="actions" style="margin-top:7px"><button class="btn light" style="padding:6px 9px;font-size:12px" onclick="openSummary('${s.id}')">📄 Resumo</button><button class="btn light" style="padding:6px 9px;font-size:12px" onclick="goQuestions('${s.id}')">📝 Registrar questões</button><button class="btn light" style="padding:6px 9px;font-size:12px" onclick="focusRow(${i})">Ver assunto</button></span></div>`}).join('')+'</div>';
  h+=goalH;document.getElementById('priorityPanel').innerHTML=h;
 }
 function renderToday(){
@@ -809,12 +812,12 @@ function renderToday(){
  const going=data.subjects.filter(s=>s.status==='estudando'&&vis.includes(s.discipline));
  h+=`<h3 class="today-title">🔵 Em andamento (${going.length})</h3>`;
  if(!going.length)h+='<div class="empty">Nenhum assunto em andamento.</div>';
- else h+='<div class="priority-grid">'+going.map(s=>{const i=data.subjects.indexOf(s);return`<div class="priority-item"><b>${esc(s.discipline)}</b><span>${esc(s.topic)}</span><br><span class="actions" style="margin-top:7px"><button class="btn light" style="padding:6px 9px;font-size:12px" onclick="openSummary('${s.id}')">📄 Resumo</button><button class="btn green" style="padding:6px 9px;font-size:12px" onclick="concludeAndOpen(${i})">✅ Concluí</button></span></div>`}).join('')+'</div>';
+ else h+='<div class="priority-grid">'+going.map(s=>{const i=data.subjects.indexOf(s);return`<div class="priority-item"><b>${esc(s.discipline)}</b><span>${esc(s.topic)}</span>${lrnBadge(s.id,true)}<br><span class="actions" style="margin-top:7px"><button class="btn light" style="padding:6px 9px;font-size:12px" onclick="openSummary('${s.id}')">📄 Resumo</button><button class="btn green" style="padding:6px 9px;font-size:12px" onclick="concludeAndOpen(${i})">✅ Concluí</button></span></div>`}).join('')+'</div>';
  h+='<h3 class="today-title" style="margin-top:18px">➡️ Próximo assunto de cada disciplina</h3><div class="priority-grid">';
  vis.forEach(d=>{
   const pend=data.subjects.filter(s=>s.discipline===d&&s.status==='pendente'),nx=pend[0];
   const sel=`<select data-d="${esc(d)}" style="width:auto;padding:4px 6px;font-size:12px" onchange="setWeight(this.dataset.d,this.value)">${[[1,'Peso normal'],[2,'Peso alto'],[3,'Peso muito alto']].map(o=>`<option value="${o[0]}" ${w(d)===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select>`;
-  h+=`<div class="priority-item"><b>${esc(d)}</b>${sel}<br><span style="display:block;margin-top:6px">${nx?esc(nx.topic):'✅ Sem assuntos pendentes'}</span>${nx?`<span class="muted">${pend.length} pendente(s) nesta disciplina</span><br><button class="btn light" style="margin-top:7px;padding:6px 9px;font-size:12px" onclick="setStatus(${data.subjects.indexOf(nx)},'estudando')">▶️ Começar a estudar</button>`:''}</div>`;
+  h+=`<div class="priority-item"><b>${esc(d)}</b>${sel}<br><span style="display:block;margin-top:6px">${nx?esc(nx.topic)+lrnBadge(nx.id,true):'✅ Sem assuntos pendentes'}</span>${nx?`<span class="muted">${pend.length} pendente(s) nesta disciplina</span><br><button class="btn light" style="margin-top:7px;padding:6px 9px;font-size:12px" onclick="setStatus(${data.subjects.indexOf(nx)},'estudando')">▶️ Começar a estudar</button>`:''}</div>`;
  });
  el.innerHTML=h+'</div>';
 }
@@ -855,7 +858,7 @@ function renderTable(){
  if(!rows.length){document.getElementById('tableWrap').innerHTML='<div class="empty">Nenhum assunto encontrado.</div>';return}
  const rv=(s,n)=>`<label class="review-item">R${n+1} <input type="date" value="${esc(s.reviewDates[n])}" onchange="setReview(${s.i},${n},this.value)"><input type="checkbox" ${s.reviewDone[n]?'checked':''} onchange="setReviewDone(${s.i},${n},this.checked)"></label>`;
  let h='<table class="tbl-edital"><thead><tr><th>#</th><th>Disciplina</th><th>Assunto</th><th>Status</th><th>3 revisões</th><th>Classificação</th><th>Questões</th><th>Ação</th></tr></thead><tbody>';
- rows.forEach(s=>{const qp=questionPct(s);h+=`<tr id="row-${s.i}"><td>${s.i+1}</td><td data-l="Disciplina"><b>${esc(s.discipline)}</b></td><td data-l="Assunto">${esc(s.topic)}${s.studyDate?`<div class="history">Estudado em ${formatDate(s.studyDate)}</div>`:''}</td><td data-l="Status"><select onchange="setStatus(${s.i},this.value)"><option value="pendente" ${s.status==='pendente'?'selected':''}>🔴 Não estudado</option><option value="estudando" ${s.status==='estudando'?'selected':''}>🔵 Estudando</option><option value="estudado" ${s.status==='estudado'?'selected':''}>🟢 Estudado</option></select></td><td data-l="Revisões"><div class="review-box">${rv(s,0)}${rv(s,1)}${rv(s,2)}</div></td><td data-l="Classificação"><select class="obs-select ${classificationClass(s.classification)}" onchange="setClassification(${s.i},this.value);this.className='obs-select '+classificationClass(this.value)"><option value="" ${!s.classification?'selected':''}>Classificação</option><option value="dominio" ${s.classification==='dominio'?'selected':''}>🟢 Domínio</option><option value="revisar" ${s.classification==='revisar'?'selected':''}>🟡 Revisar</option><option value="fraco" ${s.classification==='fraco'?'selected':''}>🔴 Fraco</option></select><input style="margin-top:4px;font-size:11px;padding:6px" value="${escAttr(s.notes)}" placeholder="Observação opcional" onchange="setNotes(${s.i},this.value)"></td><td data-l="Questões">${s.questions.total?`${s.questions.correct}/${s.questions.total}<br><b>${qp}%</b>`:'—'}</td><td data-l="Ações"><div class="actions"><button class="btn ${hasSummary(s)?'green':'light'}" onclick="openSummary('${s.id}')">📄 ${hasSummary(s)?'Ver resumo':'Resumo'}</button><button class="btn danger" onclick="removeSubject(${s.i})">🗑 Excluir</button></div></td></tr>`});
+ rows.forEach(s=>{const qp=questionPct(s);h+=`<tr id="row-${s.i}"><td>${s.i+1}</td><td data-l="Disciplina"><b>${esc(s.discipline)}</b></td><td data-l="Assunto">${esc(s.topic)}${lrnBadge(s.id,false)}${s.studyDate?`<div class="history">Estudado em ${formatDate(s.studyDate)}</div>`:''}</td><td data-l="Status"><select onchange="setStatus(${s.i},this.value)"><option value="pendente" ${s.status==='pendente'?'selected':''}>🔴 Não estudado</option><option value="estudando" ${s.status==='estudando'?'selected':''}>🔵 Estudando</option><option value="estudado" ${s.status==='estudado'?'selected':''}>🟢 Estudado</option></select></td><td data-l="Revisões"><div class="review-box">${rv(s,0)}${rv(s,1)}${rv(s,2)}</div></td><td data-l="Classificação"><select class="obs-select ${classificationClass(s.classification)}" onchange="setClassification(${s.i},this.value);this.className='obs-select '+classificationClass(this.value)"><option value="" ${!s.classification?'selected':''}>Classificação</option><option value="dominio" ${s.classification==='dominio'?'selected':''}>🟢 Domínio</option><option value="revisar" ${s.classification==='revisar'?'selected':''}>🟡 Revisar</option><option value="fraco" ${s.classification==='fraco'?'selected':''}>🔴 Fraco</option></select><input style="margin-top:4px;font-size:11px;padding:6px" value="${escAttr(s.notes)}" placeholder="Observação opcional" onchange="setNotes(${s.i},this.value)"></td><td data-l="Questões">${s.questions.total?`${s.questions.correct}/${s.questions.total}<br><b>${qp}%</b>`:'—'}</td><td data-l="Ações"><div class="actions"><button class="btn ${hasSummary(s)?'green':'light'}" onclick="openSummary('${s.id}')">📄 ${hasSummary(s)?'Ver resumo':'Resumo'}</button><button class="btn danger" onclick="removeSubject(${s.i})">🗑 Excluir</button></div></td></tr>`});
  document.getElementById('tableWrap').innerHTML=h+'</tbody></table>';
 }
 
@@ -1125,7 +1128,7 @@ function renderLearnTab(){
  if(!sids.length){box.innerHTML='<div class="empty">Nenhum conceito cadastrado ainda.</div>';return}
  box.innerHTML=sids.map(sid=>{
   const sj=byId(sid),it=lrnItems(sid),ln=it.filter(x=>x.r[3]).length,r=lrnRoundOf(sid),pct=Math.round(ln/it.length*100),open=lrnOpen.has(sid);
-  return `<div class="sum-item"><div class="sum-item-head"><b>${esc(sj.discipline)} — ${esc(sj.topic)}</b><span class="muted">${r?'Rodada '+r+'/4':'🏆 Todos aprendidos'}</span></div>
+  return `<div class="sum-item" id="lrn-${sid}"><div class="sum-item-head"><b>${esc(sj.discipline)} — ${esc(sj.topic)}</b><span class="muted">${r?'Rodada '+r+'/4':'🏆 Todos aprendidos'}</span></div>
   <div class="barline" style="margin:8px 0"><div class="progress"><span style="width:${pct}%"></span></div><b>${ln}/${it.length}</b></div>
   <div class="actions">${r?`<button class="btn" onclick="startLearn('${sid}')">▶️ ${r===1&&!it.some(x=>x.r[0])?'Começar':'Continuar'} (rodada ${r})</button>`:''}
   <button class="btn light" onclick="toggleLrn('${sid}')">${open?'▾':'▸'} Conceitos</button><button class="btn light" onclick="resetLearn('${sid}')">🔄 Reiniciar</button></div>
@@ -1321,6 +1324,26 @@ function mEnd(){
  else if(L.mode==='hunt')body=`<p>Acertos: <b>${L.hits}</b> de <b>${L.hits+L.misses}</b>.</p>`;
  else body=`<p>Acertos: <b>${L.hits}</b> • Erros: <b>${L.misses}</b></p><p class="muted">Cada acerto reduz o contador de erros do conceito.</p>`;
  qz.innerHTML=`<h3>🎉 Sessão concluída!</h3>${body}<div class="actions"><button class="btn" onclick="lrnExit()">Voltar</button></div>`;
+}
+
+function lrnCount(id){return data.learn.filter(x=>x.sid===id).length}
+function lrnBadge(id,always){
+ const n=lrnCount(id);
+ if(n)return `<button type="button" class="lrn-badge on" title="${n} conceito(s) no Aprender. Clique para abrir" onclick="event.stopPropagation();goLearn('${id}')">🧠 ${n}</button>`;
+ return always?`<button type="button" class="lrn-badge" title="Adicionar conceitos deste assunto no Aprender" onclick="event.stopPropagation();goLearn('${id}')">🧠＋</button>`:'';
+}
+function goLearn(id){
+ const sj=byId(id);if(!sj)return;
+ if(learnState){learnState=null;render()}
+ if(window.openGpsTab)window.openGpsTab('gps-tab-aprender');
+ const has=lrnCount(id)>0,add=document.getElementById('lrnSubject'),sc=document.getElementById('lrnScope');
+ if(add)add.value=id;if(has&&sc)sc.value=id;updateLrnDue();
+ if(has)lrnOpen.add(id);renderLearnTab();
+ if(add)add.value=id;if(has&&sc)sc.value=id;updateLrnDue();
+ setTimeout(()=>{
+  if(has){const c=document.getElementById('lrn-'+id);if(c){c.scrollIntoView({behavior:'smooth',block:'center'});c.style.outline='3px solid #7c3aed';setTimeout(()=>{c.style.outline=''},3000)}}
+  else{const b=document.getElementById('lrnBulk');if(b){b.scrollIntoView({behavior:'smooth',block:'center'});b.focus()}toast('🧠 Cole os conceitos de "'+sj.topic+'" (conceito — definição) e adicione.')}
+ },350);
 }
 function lrnExit(){learnState=null;render()}
 render();
