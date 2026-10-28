@@ -158,6 +158,22 @@ details.sum-disc>summary::-webkit-details-marker{display:none}details.sum-disc[o
 .lrn-badge{display:inline-flex;align-items:center;margin-left:6px;padding:2px 8px;font-size:12px;font-weight:700;border-radius:999px;background:var(--soft);color:var(--muted);border:1px dashed var(--line);opacity:.85;vertical-align:middle;cursor:pointer}
 .lrn-badge.on{background:#ede9fe;color:#5b21b6;border:1px solid #c4b5fd;opacity:1}
 :root[data-theme=dark] .lrn-badge.on{background:#2b1f52;color:#d8c8ff;border-color:#5b3fa8}
+.sum-panel{width:min(1180px,100%);height:94vh;max-height:94vh}
+.rt-toolbar{margin-bottom:10px;border:1px solid var(--line);border-radius:12px;background:var(--soft);padding:6px 8px}
+.rt-tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--line);margin-bottom:8px;padding-bottom:6px}
+.rt-tab{background:transparent!important;color:var(--muted);padding:6px 14px;font-size:13px;border-radius:8px}
+.rt-tab.on{background:var(--card)!important;color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.rt-panel{display:none;flex-wrap:wrap;gap:6px;align-items:center}.rt-panel.on{display:flex}
+.rt-panel>button{padding:7px 12px;font-size:13px;background:var(--card);color:var(--text);border:1px solid var(--line)}
+.rt-row{display:flex;gap:10px;align-items:center;width:100%}.rt-sws{display:inline-flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rt-row .rt-lbl{min-width:92px}.rt-panel .rt-sw{width:26px;height:26px}
+.rt-panel .rt-eraser{padding:4px 9px;background:var(--card);color:var(--text);border:1px solid var(--line)}.rt-panel .rt-eraser.on{background:#2563eb;color:#fff}
+.rt-hint{width:100%;font-size:12px;color:var(--muted)}
+.rt-editor{min-height:0;font-size:17px;padding:18px 22px}
+.rt-editor img.rt-sel{outline:3px solid #2563eb;outline-offset:2px}
+#imgHandle{display:none;position:fixed;width:18px;height:18px;background:#2563eb;border:2px solid #fff;border-radius:4px;cursor:nwse-resize;z-index:160;touch-action:none;box-shadow:0 1px 5px rgba(0,0,0,.45)}
+#sumModal.readmode .rt-toolbar{display:none}
+@media(max-width:700px){#sumModal{padding:6px}.sum-panel{height:97vh;max-height:97vh;padding:10px}.rt-editor{padding:12px}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
@@ -253,32 +269,50 @@ document.addEventListener('DOMContentLoaded',updateAuthUI);
 <div id="sumModal" role="dialog" aria-modal="true" aria-labelledby="sumTitle">
  <div class="sum-panel">
   <div class="sum-head"><div><span class="muted">📄 Resumo do assunto</span><h3 id="sumTitle"></h3></div><span class="actions"><span id="sumZoom" class="actions" style="display:none"><button type="button" class="btn light" onclick="sumZoom(-2)" title="Diminuir texto">A−</button><button type="button" class="btn light" onclick="sumZoom(2)" title="Aumentar texto">A+</button></span><button type="button" class="btn light" onclick="closeSummary()" aria-label="Fechar">✖</button></span></div>
-  <div class="rt-bar" onmousedown="if(event.target.tagName!=='INPUT')event.preventDefault()">
-   <button type="button" title="Negrito" onclick="fmt('bold')"><b>B</b></button>
-   <button type="button" title="Itálico" onclick="fmt('italic')"><i>I</i></button>
-   <button type="button" title="Sublinhado" onclick="fmt('underline')"><u>U</u></button>
-   <button type="button" title="Tachado" onclick="fmt('strikeThrough')"><s>S</s></button>
-   <span class="rt-sep"></span>
-   <button type="button" title="Título" onclick="fmtBlock('H2')">Título</button>
-   <button type="button" title="Subtítulo" onclick="fmtBlock('H3')">Subtítulo</button>
-   <button type="button" title="Texto normal" onclick="fmtBlock('P')">Texto</button>
-   <button type="button" title="Citação" onclick="fmtBlock('BLOCKQUOTE')">❝</button>
-   <span class="rt-sep"></span>
-   <button type="button" title="Lista" onclick="fmt('insertUnorderedList')">• Lista</button>
-   <button type="button" title="Lista numerada" onclick="fmt('insertOrderedList')">1. Lista</button>
-   <span class="rt-sep"></span>
-   <span class="rt-lbl">Cor</span><span id="rtColors" class="rt-bar" style="margin:0"></span>
-   <span class="rt-lbl">Marca-texto</span><span id="rtMarks" class="rt-bar" style="margin:0"></span>
-   <span class="rt-sep"></span>
-   <button type="button" title="Inserir imagem" onclick="document.getElementById('sumImg').click()">🖼️ Imagem</button>
-   <span class="rt-sep"></span>
-   <button type="button" title="Inserir tabela" onclick="sumInsertTable()">▦ Tabela</button>
-   <button type="button" title="Adicionar linha abaixo" onclick="tblOp('addRow')">＋ Linha</button>
-   <button type="button" title="Adicionar coluna à direita" onclick="tblOp('addCol')">＋ Coluna</button>
-   <button type="button" title="Remover linha" onclick="tblOp('delRow')">－ Linha</button>
-   <button type="button" title="Remover coluna" onclick="tblOp('delCol')">－ Coluna</button>
-   <button type="button" title="Excluir tabela" onclick="tblOp('delTable')">🗑️ Tabela</button>
-   <button type="button" title="Limpar formatação" onclick="fmt('removeFormat')">🧹</button>
+  <div class="rt-toolbar" onmousedown="if(event.target.tagName!=='INPUT')event.preventDefault()">
+   <div class="rt-tabs">
+    <button type="button" class="rt-tab on" data-p="txt" onclick="rtTab('txt')">✍️ Texto</button>
+    <button type="button" class="rt-tab" data-p="cor" onclick="rtTab('cor')">🎨 Cores</button>
+    <button type="button" class="rt-tab" data-p="ins" onclick="rtTab('ins')">➕ Inserir</button>
+    <button type="button" class="rt-tab" data-p="tab" onclick="rtTab('tab')">▦ Tabela</button>
+   </div>
+   <div class="rt-panel on" id="rtp-txt">
+    <button type="button" title="Negrito (Ctrl+B)" onclick="fmt('bold')"><b>B</b></button>
+    <button type="button" title="Itálico (Ctrl+I)" onclick="fmt('italic')"><i>I</i></button>
+    <button type="button" title="Sublinhado (Ctrl+U)" onclick="fmt('underline')"><u>U</u></button>
+    <button type="button" title="Tachado" onclick="fmt('strikeThrough')"><s>S</s></button>
+    <span class="rt-sep"></span>
+    <button type="button" onclick="fmtBlock('H2')">Título</button>
+    <button type="button" onclick="fmtBlock('H3')">Subtítulo</button>
+    <button type="button" onclick="fmtBlock('P')">Texto</button>
+    <button type="button" title="Citação" onclick="fmtBlock('BLOCKQUOTE')">❝ Citação</button>
+    <span class="rt-sep"></span>
+    <button type="button" onclick="fmt('insertUnorderedList')">• Lista</button>
+    <button type="button" onclick="fmt('insertOrderedList')">1. Lista</button>
+    <span class="rt-sep"></span>
+    <button type="button" title="Limpar formatação" onclick="fmt('removeFormat')">🧹 Limpar</button>
+   </div>
+   <div class="rt-panel" id="rtp-cor">
+    <div class="rt-row"><span class="rt-lbl">Cor do texto</span><span id="rtColors" class="rt-sws"></span></div>
+    <div class="rt-row"><span class="rt-lbl">Marca-texto</span><span id="rtMarks" class="rt-sws"></span></div>
+    <div class="rt-hint">Clique em uma cor do marca-texto e depois selecione o texto para marcar. Clique na cor de novo ou aperte Esc para desligar.</div>
+   </div>
+   <div class="rt-panel" id="rtp-ins">
+    <button type="button" onclick="document.getElementById('sumImg').click()">🖼️ Imagem</button>
+    <button type="button" onclick="sumInsertTable()">▦ Tabela</button>
+    <span class="rt-sep"></span>
+    <span class="rt-lbl">Tamanho da imagem selecionada</span>
+    <button type="button" onclick="imgPreset(25)">25%</button><button type="button" onclick="imgPreset(50)">50%</button><button type="button" onclick="imgPreset(75)">75%</button><button type="button" onclick="imgPreset(100)">100%</button>
+    <div class="rt-hint">Clique em uma imagem e arraste o quadradinho azul do canto para mudar o tamanho. Você também pode colar prints com Ctrl+V.</div>
+   </div>
+   <div class="rt-panel" id="rtp-tab">
+    <button type="button" onclick="tblOp('addRow')">＋ Linha</button>
+    <button type="button" onclick="tblOp('addCol')">＋ Coluna</button>
+    <button type="button" onclick="tblOp('delRow')">－ Linha</button>
+    <button type="button" onclick="tblOp('delCol')">－ Coluna</button>
+    <button type="button" onclick="tblOp('delTable')">🗑️ Excluir tabela</button>
+    <div class="rt-hint">Clique dentro de uma célula antes de usar os botões. Arraste a borda direita da célula para ajustar a largura da coluna. Para criar a tabela, use a aba Inserir.</div>
+   </div>
    <input type="file" id="sumImg" accept="image/*" style="display:none" onchange="sumPickImage(this)">
   </div>
   <div id="sumEditor" class="rt-editor" contenteditable="true" spellcheck="false"></div>
@@ -512,7 +546,7 @@ function sanitizeHtml(html){
   if(SKIP_TAGS.has(tag))return;
   if(!OK_TAGS.has(tag)){copy(n,dst);return}
   const el=document.createElement(tag);
-  if(tag==='IMG'){const sp=n.getAttribute('data-sp')||'',u=n.getAttribute('src')||'';if(SP_RE.test(sp)){el.setAttribute('data-sp',sp);el.setAttribute('alt','')}else if(IMG_RE.test(u)){el.setAttribute('src',u);el.setAttribute('alt','')}else return}
+  if(tag==='IMG'){const sp=n.getAttribute('data-sp')||'',u=n.getAttribute('src')||'';if(SP_RE.test(sp)){el.setAttribute('data-sp',sp);el.setAttribute('alt','')}else if(IMG_RE.test(u)){el.setAttribute('src',u);el.setAttribute('alt','')}else return;const wm=/(?:^|;)\s*width\s*:\s*(\d{2,4})px/.exec(n.getAttribute('style')||'');if(wm)el.setAttribute('style','width:'+Math.min(2000,+wm[1])+'px')}
   else{const st=cleanStyle(n.getAttribute('style'));if(st)el.setAttribute('style',st);if(tag==='TD'||tag==='TH')['colspan','rowspan'].forEach(a=>{const v=n.getAttribute(a);if(/^\d{1,2}$/.test(v||''))el.setAttribute(a,v)});if(tag!=='BR')copy(n,el)}
   dst.appendChild(el);
  })};
@@ -866,7 +900,7 @@ let sumId=null,sumReview=null,sumDirty=false,sumRange=null,sumMode='edit',readSi
 try{readSize=Math.min(40,Math.max(13,Number(localStorage.getItem('gps_read_size'))||19))}catch(e){}
 function sumZoom(d){readSize=Math.min(40,Math.max(13,readSize+d));document.getElementById('sumModal').style.setProperty('--rs',readSize+'px');try{localStorage.setItem('gps_read_size',readSize)}catch(e){}}
 function setSumMode(m){
- sumMode=m;const r=m==='read';if(r)hlSet(null);
+ sumMode=m;const r=m==='read';if(r){hlSet(null);imgDeselect()}
  document.getElementById('sumZoom').style.display=r?'':'none';document.getElementById('sumModal').style.setProperty('--rs',readSize+'px');
  document.getElementById('sumModal').classList.toggle('readmode',r);
  sumEd().contentEditable=r?'false':'true';
@@ -886,7 +920,7 @@ function openSummary(id,review,mode){
 }
 function closeSummary(force){
  if(force!==true&&sumDirty&&!confirm('Há alterações não salvas. Fechar mesmo assim?'))return;
- document.getElementById('sumModal').classList.remove('open');document.body.style.overflow='';sumId=null;sumDirty=false;hlSet(null);
+ document.getElementById('sumModal').classList.remove('open');document.body.style.overflow='';sumId=null;sumDirty=false;hlSet(null);imgDeselect();
 }
 function saveSummary(quiet){
  const s=byId(sumId);if(!s)return false;
@@ -1352,6 +1386,38 @@ function goLearn(id){
 const lrnClosed=new Set();
 function lrnGroups(list){const m=new Map();list.forEach(x=>{if(!x)return;if(!m.has(x.discipline))m.set(x.discipline,[]);m.get(x.discipline).push(x)});return m}
 function lrnToggleDisc(el){if(el.open)lrnClosed.delete(el.dataset.d);else lrnClosed.add(el.dataset.d)}
+
+function rtTab(p){
+ document.querySelectorAll('.rt-tab').forEach(b=>b.classList.toggle('on',b.dataset.p===p));
+ document.querySelectorAll('.rt-panel').forEach(x=>x.classList.toggle('on',x.id==='rtp-'+p));
+}
+/* ===== redimensionar imagens arrastando ===== */
+let selImg=null;
+function imgDeselect(){if(selImg)selImg.classList.remove('rt-sel');selImg=null;const h=document.getElementById('imgHandle');if(h)h.style.display='none'}
+function placeHandle(){
+ const h=document.getElementById('imgHandle');if(!h)return;
+ if(!selImg||!selImg.isConnected){imgDeselect();return}
+ const r=selImg.getBoundingClientRect(),e=sumEd().getBoundingClientRect();
+ if(r.bottom<e.top+10||r.top>e.bottom-10){h.style.display='none';return}
+ h.style.display='block';h.style.left=(r.right-9)+'px';h.style.top=Math.min(r.bottom,e.bottom-10)-9+'px';
+}
+function imgSelect(im){imgDeselect();selImg=im;im.classList.add('rt-sel');placeHandle()}
+function imgSetWidth(w){
+ if(!selImg)return;
+ selImg.style.width=Math.max(40,Math.min(sumEd().clientWidth-40,Math.round(w)))+'px';selImg.style.height='auto';
+ sumDirty=true;placeHandle();
+}
+function imgPreset(pct){if(!selImg){toast('Clique em uma imagem primeiro.',true);return}imgSetWidth((sumEd().clientWidth-40)*pct/100)}
+(function(){
+ const ed=sumEd(),h=document.createElement('div');h.id='imgHandle';h.title='Arraste para redimensionar';
+ document.getElementById('sumModal').appendChild(h);let d=null;
+ h.addEventListener('pointerdown',e=>{if(!selImg)return;e.preventDefault();h.setPointerCapture(e.pointerId);d={x:e.clientX,w:selImg.getBoundingClientRect().width}});
+ h.addEventListener('pointermove',e=>{if(d)imgSetWidth(d.w+e.clientX-d.x)});
+ h.addEventListener('pointerup',()=>{d=null});
+ ed.addEventListener('click',e=>{if(e.target.tagName==='IMG'&&sumMode!=='read')imgSelect(e.target);else imgDeselect()});
+ ed.addEventListener('scroll',placeHandle);window.addEventListener('resize',placeHandle);
+ ed.addEventListener('input',()=>{if(selImg)placeHandle()});
+})();
 function lrnExit(){learnState=null;render()}
 render();
 </script>
