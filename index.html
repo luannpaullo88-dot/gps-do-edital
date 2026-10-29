@@ -174,6 +174,19 @@ details.sum-disc>summary::-webkit-details-marker{display:none}details.sum-disc[o
 #imgHandle{display:none;position:fixed;width:18px;height:18px;background:#2563eb;border:2px solid #fff;border-radius:4px;cursor:nwse-resize;z-index:160;touch-action:none;box-shadow:0 1px 5px rgba(0,0,0,.45)}
 #sumModal.readmode .rt-toolbar{display:none}
 @media(max-width:700px){#sumModal{padding:6px}.sum-panel{height:97vh;max-height:97vh;padding:10px}.rt-editor{padding:12px}}
+.mob-only{display:none}
+@media(max-width:700px){
+ .mob-only{display:inline-block;padding:8px 12px;font-size:13px}
+ #sumModal.readmode .mob-only{display:none!important}
+ .sum-panel,#sumModal.readmode .sum-panel{height:100%;max-height:100%}
+ #sumModal:not(.readmode) .rt-toolbar{display:none}
+ #sumModal.fmtopen:not(.readmode) .rt-toolbar{display:block}
+ #sumModal.typing .sum-head>div:first-child{display:none}
+ #sumModal.typing .sum-head{justify-content:flex-end;margin-bottom:6px}
+ #sumModal.typing .sum-foot{display:none}
+ .sum-head h3{font-size:15px}
+ .rt-editor{font-size:16px}
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
@@ -268,7 +281,7 @@ document.addEventListener('DOMContentLoaded',updateAuthUI);
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="sumModal" role="dialog" aria-modal="true" aria-labelledby="sumTitle">
  <div class="sum-panel">
-  <div class="sum-head"><div><span class="muted">📄 Resumo do assunto</span><h3 id="sumTitle"></h3></div><span class="actions"><span id="sumZoom" class="actions" style="display:none"><button type="button" class="btn light" onclick="sumZoom(-2)" title="Diminuir texto">A−</button><button type="button" class="btn light" onclick="sumZoom(2)" title="Aumentar texto">A+</button></span><button type="button" class="btn light" onclick="closeSummary()" aria-label="Fechar">✖</button></span></div>
+  <div class="sum-head"><div><span class="muted">📄 Resumo do assunto</span><h3 id="sumTitle"></h3></div><span class="actions"><button type="button" class="btn light mob-only" onclick="toggleFmt()">🎨 Formatar</button><button type="button" class="btn mob-only" onclick="saveSummary()">💾 Salvar</button><span id="sumZoom" class="actions" style="display:none"><button type="button" class="btn light" onclick="sumZoom(-2)" title="Diminuir texto">A−</button><button type="button" class="btn light" onclick="sumZoom(2)" title="Aumentar texto">A+</button></span><button type="button" class="btn light" onclick="closeSummary()" aria-label="Fechar">✖</button></span></div>
   <div class="rt-toolbar" onmousedown="if(event.target.tagName!=='INPUT')event.preventDefault()">
    <div class="rt-tabs">
     <button type="button" class="rt-tab on" data-p="txt" onclick="rtTab('txt')">✍️ Texto</button>
@@ -916,11 +929,11 @@ function openSummary(id,review,mode){
  document.getElementById('sumTitle').textContent=s.discipline+' — '+s.topic;
  sumEd().innerHTML=sanitizeHtml(s.summary||'');resolveImages(sumEd());
  document.getElementById('sumDone').style.display=sumReview===null?'none':'';
- setSumMode(mode||'edit');document.getElementById('sumModal').classList.add('open');document.body.style.overflow='hidden';
+ setSumMode(mode||'edit');document.getElementById('sumModal').classList.add('open');document.body.style.overflow='hidden';fitModal();
 }
 function closeSummary(force){
  if(force!==true&&sumDirty&&!confirm('Há alterações não salvas. Fechar mesmo assim?'))return;
- document.getElementById('sumModal').classList.remove('open');document.body.style.overflow='';sumId=null;sumDirty=false;hlSet(null);imgDeselect();
+ document.getElementById('sumModal').classList.remove('open');document.body.style.overflow='';sumId=null;sumDirty=false;hlSet(null);imgDeselect();sumModalReset();
 }
 function saveSummary(quiet){
  const s=byId(sumId);if(!s)return false;
@@ -1417,6 +1430,24 @@ function imgPreset(pct){if(!selImg){toast('Clique em uma imagem primeiro.',true)
  ed.addEventListener('click',e=>{if(e.target.tagName==='IMG'&&sumMode!=='read')imgSelect(e.target);else imgDeselect()});
  ed.addEventListener('scroll',placeHandle);window.addEventListener('resize',placeHandle);
  ed.addEventListener('input',()=>{if(selImg)placeHandle()});
+})();
+
+/* ===== edição no celular: teclado, barra recolhida e tela que acompanha ===== */
+function fitModal(){
+ const m=document.getElementById('sumModal');if(!m||!m.classList.contains('open'))return;
+ const vv=window.visualViewport;
+ if(vv&&window.matchMedia('(max-width:700px)').matches){m.style.height=vv.height+'px';m.style.top=vv.offsetTop+'px';m.style.bottom='auto'}
+ else{m.style.height='';m.style.top='';m.style.bottom=''}
+}
+function sumModalReset(){const m=document.getElementById('sumModal');m.classList.remove('typing','fmtopen');m.style.height='';m.style.top='';m.style.bottom=''}
+function toggleFmt(){document.getElementById('sumModal').classList.toggle('fmtopen')}
+(function(){
+ const ed=sumEd(),m=document.getElementById('sumModal');let t=null;
+ const mob=()=>window.matchMedia('(max-width:700px)').matches;
+ ed.addEventListener('focus',()=>{clearTimeout(t);if(mob()&&sumMode!=='read')m.classList.add('typing')});
+ ed.addEventListener('blur',()=>{clearTimeout(t);t=setTimeout(()=>m.classList.remove('typing'),350)});
+ if(window.visualViewport){visualViewport.addEventListener('resize',fitModal);visualViewport.addEventListener('scroll',fitModal)}
+ window.addEventListener('orientationchange',()=>setTimeout(fitModal,300));
 })();
 function lrnExit(){learnState=null;render()}
 render();
