@@ -187,6 +187,32 @@ details.sum-disc>summary::-webkit-details-marker{display:none}details.sum-disc[o
  .sum-head h3{font-size:15px}
  .rt-editor{font-size:16px}
 }
+
+/* ===== MURAL DE POST-ITS ===== */
+.dc-board{display:flex;flex-wrap:wrap;gap:22px 20px;align-items:flex-start;padding:24px 18px;border-radius:14px;background-color:#c9a36b;background-image:radial-gradient(#b48a52 1px,transparent 1.6px),radial-gradient(#dcb985 1px,transparent 1.6px);background-size:15px 15px,23px 23px;background-position:0 0,8px 10px;box-shadow:inset 0 0 40px rgba(60,35,10,.35),0 3px 10px rgba(0,0,0,.18)}
+:root[data-theme=dark] .dc-board{background-color:#8a6a40;box-shadow:inset 0 0 40px rgba(0,0,0,.5)}
+.dc-note{position:relative;width:210px;padding:28px 14px 10px;background:var(--nc,#fff59d);color:#2b2b2b;box-shadow:2px 7px 12px rgba(0,0,0,.3);transform:rotate(var(--rot,0deg));transition:transform .15s,box-shadow .15s;font-family:'Segoe Print','Bradley Hand','Comic Sans MS',cursive;font-size:15px;line-height:1.4;border-bottom-right-radius:26px 8px}
+.dc-note::before{content:'';position:absolute;top:8px;left:50%;margin-left:-7px;width:14px;height:14px;border-radius:50%;background:radial-gradient(circle at 30% 30%,#ff8a80,#c62828);box-shadow:0 3px 4px rgba(0,0,0,.45)}
+.dc-note:hover{transform:rotate(0deg) scale(1.04);box-shadow:4px 12px 18px rgba(0,0,0,.35);z-index:3}
+.dc-note[draggable=true]{cursor:grab}
+.dc-note.pin{box-shadow:3px 10px 16px rgba(0,0,0,.38);z-index:2}
+.dc-note.pin::before{background:radial-gradient(circle at 30% 30%,#ffe082,#f9a825)}
+.dc-note.pin::after{content:'📌 FIXADO';position:absolute;top:6px;left:8px;font:800 10px Arial;color:#8a5a00}
+.dc-note.s1{opacity:.8;filter:saturate(.75)}
+.dc-note.s2{box-shadow:0 0 0 3px #e5393566,2px 7px 12px rgba(0,0,0,.3)}
+.dc-note.s1 .dc-text::after{content:'✔ DECOREI';display:inline-block;margin-left:8px;transform:rotate(-8deg);border:2px solid #2e7d32;color:#2e7d32;font:800 11px Arial;padding:1px 6px;border-radius:4px;background:rgba(255,255,255,.6)}
+.dc-note.s2 .dc-text::after{content:'✖ AINDA ERRO';display:inline-block;margin-left:8px;transform:rotate(-8deg);border:2px solid #c62828;color:#c62828;font:800 11px Arial;padding:1px 6px;border-radius:4px;background:rgba(255,255,255,.6)}
+.dc-text{white-space:pre-wrap;word-break:break-word}
+.dc-from{font:700 10px Arial;text-transform:uppercase;color:#6b5b2e;margin-bottom:4px}
+.dc-act{display:flex;gap:4px;margin-top:10px;flex-wrap:wrap}
+.dc-act button{padding:3px 7px;font-size:13px;background:rgba(255,255,255,.7);color:#222;border:1px solid rgba(0,0,0,.18);border-radius:8px;font-family:Arial}
+.dc-act button.on{background:#2563eb;color:#fff}
+.dc-mv{display:none!important}
+@media(hover:none){.dc-mv{display:inline-block!important}}
+.dc-edit{width:100%;min-height:110px;font:inherit;background:rgba(255,255,255,.7);color:#222;border:1px dashed #8a7a4a}
+.lrn-badge.dec.on{background:#fff3c4;color:#8a5a00;border:1px solid #f0c75e}
+:root[data-theme=dark] .lrn-badge.dec.on{background:#4a3a10;color:#ffe08a;border-color:#8a6a1c}
+@media(max-width:600px){.dc-board{gap:18px 12px;padding:20px 10px}.dc-note{width:calc(50% - 8px);min-width:140px;font-size:14px}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
@@ -351,6 +377,7 @@ document.addEventListener('DOMContentLoaded',updateAuthUI);
       <button type="button" class="btn light" onclick="resetGPS()">Esqueci minha senha</button>
     </div>
     <p id="authMessage" style="margin:12px 0 0;font-size:14px;"></p>
+    <p class="muted small" id="appVersionLogin" style="margin:14px 0 0;text-align:center"></p>
   </div>
 </div>
 
@@ -401,6 +428,25 @@ Raciocínio Lógico — Proposições"></textarea>
 <h2>📚 O que estudar agora</h2>
 <p class="muted">Fila por disciplina: o que você já começou e o próximo assunto de cada matéria. Defina o peso das disciplinas que mais caem na prova para que apareçam primeiro.</p>
 <div id="todayList"></div>
+</div>
+
+<div class="section card" data-tab="decorar">
+<h2>🗒️ Decorar</h2>
+<p class="muted">Seu mural de post-its: escreva o que precisa <b>decorar</b> (prazos, números, artigos, macetes, siglas) sem limite de tamanho. Marque ✅ quando decorou ou ❌ se ainda erra, e fixe 📌 os mais importantes no topo.</p>
+<div class="row"><div class="field"><label class="small">Assunto do edital</label><select id="dcSubject"></select></div></div>
+<textarea id="dcBulk" style="margin-top:10px;min-height:110px" placeholder="Um post-it por linha:&#10;Prazo do recurso: 5 dias&#10;Peculato: art. 312 do CP&#10;&#10;Para um post-it com várias linhas, separe cada post-it com uma linha contendo só ---"></textarea>
+<div class="actions" style="margin-top:10px"><button class="btn green" onclick="dcAdd()">➕ Colar no mural</button></div>
+<p class="muted" id="dcStats" style="margin-top:14px"></p>
+<h3 class="today-title" style="margin-top:20px">🌅 Mural do dia</h3>
+<p class="muted" style="margin-top:0">Os post-its para ler hoje: primeiro os fixados e os que você ainda erra, depois os novos.</p>
+<div class="actions" style="margin-bottom:10px"><button class="btn light" onclick="dcDailyNew()">🔄 Sortear de novo</button></div>
+<div id="dcDaily"></div>
+<h3 class="today-title" style="margin-top:24px">🧱 Meu mural</h3>
+<div class="row" style="margin-bottom:12px">
+<div class="field"><label class="small">Mostrar</label><select id="dcScope" onchange="dcScope=this.value;renderDecorar()"></select></div>
+<div class="field"><label class="small">Situação</label><select id="dcStatus" onchange="dcStatus=this.value;renderDecorar()"><option value="">Todos</option><option value="0">🆕 Novos</option><option value="1">✅ Decorei</option><option value="2">❌ Ainda erro</option></select></div>
+</div>
+<div id="dcWall"></div>
 </div>
 
 <div class="section card" data-tab="resumo">
@@ -478,12 +524,17 @@ Concussão — Exigir vantagem indevida em razão da função"></textarea>
 
 <div class="section card" data-tab="dados">
 <h2>🗑️ Gerenciar dados</h2>
+<h3 class="today-title">💾 Backup</h3>
+<p class="muted" style="margin-top:0">Baixe uma cópia de <b>todos os seus editais</b> (assuntos, questões, resumos, conceitos e histórico) em um arquivo. Para restaurar, importe o arquivo: os editais dele são <b>adicionados</b> aos que você já tem, sem apagar nada. As imagens dos resumos ficam guardadas no Storage da sua conta e não vão dentro do arquivo.</p>
+<div class="actions"><button type="button" class="btn green" onclick="exportData()">💾 Baixar backup</button><label class="btn light" style="display:inline-block">📂 Importar backup<input type="file" id="importFile" accept=".json,application/json" onchange="importData(event)" style="display:none"></label></div>
+<hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
 <h3 class="today-title">☁️ Armazenamento</h3>
 <p class="muted" id="storageInfo"></p>
 <button type="button" class="btn light" onclick="migrateImages()">☁️ Mover imagens dos resumos para o Storage</button>
 <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
 <p class="muted">Apaga assuntos, questões e resumos <b>somente do edital atual</b> (no perfil mestre, do perfil marcado no seletor do topo). Outros editais e perfis não são afetados. Para remover o edital inteiro, use o botão 🗑️ Excluir no topo da página.</p>
 <button class="btn danger" onclick="clearAll()">Apagar os dados do edital atual</button>
+<p class="muted small" id="appVersion" style="margin-top:16px"></p>
 </div>
 
 
@@ -492,7 +543,7 @@ Concussão — Exigir vantagem indevida em razão da função"></textarea>
 
 <script>
 (function(){
-  const TABS=[['agora','🎯 O que fazer agora'],['estudar','📚 O que estudar agora'],['resumo','📊 Resumo do seu desempenho'],['quest','📝 Controle de questões'],['crit','⚠️ Assuntos críticos'],['edital','📋 Verticalização completa do edital'],['resumos','📄 Meus resumos'],['aprender','🧠 Aprender'],['config','⚙️ Configuração da prova'],['dados','🗑️ Gerenciar dados']];
+  const TABS=[['agora','🎯 O que fazer agora'],['estudar','📚 O que estudar agora'],['decorar','🗒️ Decorar'],['resumo','📊 Resumo do seu desempenho'],['quest','📝 Controle de questões'],['crit','⚠️ Assuntos críticos'],['edital','📋 Verticalização completa do edital'],['resumos','📄 Meus resumos'],['aprender','🧠 Aprender'],['config','⚙️ Configuração da prova'],['dados','🗑️ Gerenciar dados']];
   function initTabs(){
     const container=document.querySelector('.container');
     if(!container||container.querySelector('.tabs-nav-gps'))return;
@@ -536,12 +587,13 @@ Concussão — Exigir vantagem indevida em razão da função"></textarea>
 </script>
 <script>
 const KEY=LS_KEY;
+const APP_VERSION='2026.11.08-b'; // troque a cada entrega para conferir se o site atualizou
 const DRE=/^\d{4}-\d{2}-\d{2}$/;
 const STATUSES=['pendente','estudando','estudado'],CLASSES=['','dominio','revisar','fraco'];
 const vd=v=>(typeof v==='string'&&DRE.test(v))?v:'';
 const num=v=>{v=Math.floor(Number(v));return Number.isFinite(v)&&v>0?v:0};
 function newId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
-function emptyData(){return{examName:'',examDate:'',dailyGoal:20,weights:{},learn:[],subjects:[],questionLogs:[],studyHistory:[]}}
+function emptyData(){return{examName:'',examDate:'',dailyGoal:20,weights:{},learn:[],notes:[],dcDaily:{date:'',ids:[]},subjects:[],questionLogs:[],studyHistory:[]}}
 
 const OK_TAGS=new Set(['B','STRONG','I','EM','U','S','STRIKE','MARK','SPAN','P','DIV','BR','UL','OL','LI','H2','H3','BLOCKQUOTE','IMG','TABLE','THEAD','TBODY','TR','TD','TH']);
 const SKIP_TAGS=new Set(['SCRIPT','STYLE','IFRAME','OBJECT','EMBED','TEMPLATE','NOSCRIPT','SVG','MATH']);
@@ -601,6 +653,13 @@ function normalizeStudyData(value){
   const cc=String(r.concept??'').trim().slice(0,300),dd=String(r.def??'').trim().slice(0,1500);if(!cc||!dd)return;
   const rr=Array.isArray(r.r)?r.r:[];out.learn.push({id:cleanId(r.id)||newId(),sid,concept:cc,def:dd,r:[0,1,2,3].map(n=>!!rr[n]),miss:num(r.miss),due:vd(r.due),ivl:num(r.ivl),ease:Math.min(3,Math.max(1.3,Number(r.ease)||2.5)),reps:num(r.reps),own:String(r.own||'').slice(0,2000)});
  });
+ (Array.isArray(x.notes)?x.notes:[]).slice(0,3000).forEach(r=>{
+  if(!r||typeof r!=='object')return;const sid=String(r.sid||'');if(!valid.has(sid))return;
+  const tx=String(r.t??'').trim().slice(0,100000);if(!tx)return;
+  out.notes.push({id:cleanId(r.id)||newId(),sid,t:tx,c:Math.min(7,num(r.c)),rot:Math.max(-4,Math.min(4,Number(r.rot)||0)),st:[0,1,2].includes(Number(r.st))?Number(r.st):0,pin:!!r.pin,o:Number.isFinite(Number(r.o))?Number(r.o):0});
+ });
+ const dd=(x.dcDaily&&typeof x.dcDaily==='object')?x.dcDaily:{};
+ out.dcDaily={date:vd(dd.date),ids:(Array.isArray(dd.ids)?dd.ids:[]).map(cleanId).filter(Boolean).slice(0,50)};
  return out;
 }
 
@@ -750,7 +809,7 @@ function removeSubject(i){
  const id=data.subjects[i].id;
  data.subjects.splice(i,1);
  data.questionLogs=data.questionLogs.filter(r=>r.subject!==id);
- data.studyHistory=data.studyHistory.filter(r=>r.subject!==id);data.learn=data.learn.filter(r=>r.sid!==id);
+ data.studyHistory=data.studyHistory.filter(r=>r.subject!==id);data.learn=data.learn.filter(r=>r.sid!==id);data.notes=data.notes.filter(r=>r.sid!==id);
  save();
 }
 function focusRow(i){
@@ -775,17 +834,33 @@ function removeQuestion(i){
  if(s){s.questions.total=Math.max(0,s.questions.total-r.total);s.questions.correct=Math.max(0,s.questions.correct-r.correct)}
  data.questionLogs.splice(i,1);save();
 }
-function exportData(){const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='backup-gps-edital-'+today()+'.json';a.click();URL.revokeObjectURL(a.href)}
+function exportData(){
+ const payload={app:'gps-do-edital',version:APP_VERSION,exportedAt:new Date().toISOString(),store};
+ const blob=new Blob([JSON.stringify(payload)],{type:'application/json'}),a=document.createElement('a');
+ a.href=URL.createObjectURL(blob);a.download='backup-gps-edital-'+today()+'.json';document.body.appendChild(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+ toast('💾 Backup baixado ('+store.editais.length+' edital(is))');
+}
 function importData(e){
  const file=e.target.files[0];if(!file)return;
+ const done=()=>{e.target.value=''};
+ if(file.size>40*1024*1024){alert('Arquivo grande demais para importar.');done();return}
  const r=new FileReader();
  r.onload=()=>{
   try{
-   const x=JSON.parse(r.result);if(!x||!Array.isArray(x.subjects))throw Error();
-   if(!confirm('Importar vai SUBSTITUIR os dados do perfil atual. Continuar?'))return;
-   activeEd().data=normalizeStudyData(x);data=activeEd().data;save();toast('✅ Backup importado com sucesso.');
-  }catch{alert('Arquivo de backup inválido.')}
-  e.target.value='';
+   const x=JSON.parse(r.result),src=(x&&x.store)?x.store:x;
+   if(!src||!(Array.isArray(src.editais)||Array.isArray(src.subjects)))throw Error('formato');
+   const st=normalizeStore(src),n=st.editais.length,subj=st.editais.reduce((a,ed)=>a+ed.data.subjects.length,0);
+   const emptyNow=store.editais.length===1&&!store.editais[0].data.subjects.length&&!store.editais[0].data.learn.length;
+   if((emptyNow?0:store.editais.length)+n>30){alert('O limite é de 30 editais por perfil. Exclua algum antes de importar.');done();return}
+   if(!confirm('Importar '+n+' edital(is) com '+subj+' assunto(s)?\n\nEles serão ADICIONADOS aos seus editais atuais. Nada será apagado.')){done();return}
+   if(emptyNow)store.editais=[];
+   const names=new Set(store.editais.map(ed=>ed.name));
+   st.editais.forEach(ed=>{ed.id=newId();if(names.has(ed.name))ed.name=(ed.name+' (importado)').slice(0,80);names.add(ed.name);store.editais.push(ed)});
+   store.activeId=store.editais[store.editais.length-n].id;data=activeEd().data;sumOpenItem=null;
+   save();toast('✅ Backup importado: '+n+' edital(is).');
+  }catch(err){alert('Arquivo de backup inválido.')}
+  done();
  };
  r.readAsText(file);
 }
@@ -816,7 +891,7 @@ function render(){
  document.getElementById('criticalCount').textContent=due+weak+low;document.getElementById('mStudied').textContent=done;document.getElementById('mWeak').textContent=weak;document.getElementById('mReviews').textContent=due;
  const qt=data.subjects.reduce((a,s)=>a+s.questions.total,0),qc=data.subjects.reduce((a,s)=>a+s.questions.correct,0),qp=qt?Math.round(qc/qt*100):0;
  document.getElementById('questionAccuracy').textContent=qp+'%';document.getElementById('questionLabel').textContent=qt+' feitas';document.getElementById('mQuestions').textContent=qt;
- renderPriority();renderToday();renderSummary();renderQuestions();renderCritical();renderTable();renderWeekly();renderSummariesTab();renderLearnTab();
+ renderPriority();renderToday();renderSummary();renderQuestions();renderCritical();renderTable();renderWeekly();renderSummariesTab();renderLearnTab();renderDecorar();
 }
 let studyDiscFilter='todas';
 function questionsToday(){return data.questionLogs.filter(r=>r.date===today()).reduce((a,r)=>a+r.total,0)}
@@ -843,11 +918,11 @@ function renderPriority(){
  const due=[];data.subjects.forEach(s=>s.reviewDates.forEach((d,n)=>{if(d&&d<=t&&!s.reviewDone[n])due.push({s,n,d})}));
  h+=`<h3 class="today-title">🟣 Revisões de hoje / vencidas (${due.length})</h3>`;
  if(!due.length)h+='<div class="empty">Nenhuma revisão pendente.</div>';
- else h+='<div class="priority-grid">'+due.slice(0,30).map(x=>`<div class="priority-item"><b>${x.n+1}ª revisão • ${formatDate(x.d)}</b><span>${esc(x.s.discipline)} — ${esc(x.s.topic)}</span>${lrnBadge(x.s.id,true)}<br><span class="actions" style="margin-top:7px"><button class="btn light" style="padding:6px 9px;font-size:12px" onclick="openSummary('${x.s.id}',${x.n},'read')">📄 Revisar</button><button class="btn green" style="padding:6px 9px;font-size:12px" onclick="doReview('${x.s.id}',${x.n})">✅ Feita</button></span></div>`).join('')+'</div>';
+ else h+='<div class="priority-grid">'+due.slice(0,30).map(x=>`<div class="priority-item"><b>${x.n+1}ª revisão • ${formatDate(x.d)}</b><span>${esc(x.s.discipline)} — ${esc(x.s.topic)}</span>${lrnBadge(x.s.id,true)}${decBadge(x.s.id,true)}<br><span class="actions" style="margin-top:7px"><button class="btn light" style="padding:6px 9px;font-size:12px" onclick="openSummary('${x.s.id}',${x.n},'read')">📄 Revisar</button><button class="btn green" style="padding:6px 9px;font-size:12px" onclick="doReview('${x.s.id}',${x.n})">✅ Feita</button></span></div>`).join('')+'</div>';
  const al=data.subjects.filter(s=>s.classification==='fraco'||(questionPct(s)!==null&&questionPct(s)<60));
  h+=`<h3 class="today-title" style="margin-top:18px">⚠️ Alertas de desempenho (${al.length})</h3>`;
  if(!al.length)h+='<div class="empty">Nenhum assunto fraco ou abaixo de 60% em questões.</div>';
- else h+='<div class="priority-grid">'+al.slice(0,8).map(s=>{const i=data.subjects.indexOf(s),m=[];if(s.classification==='fraco')m.push('🔴 Fraco');if(questionPct(s)!==null&&questionPct(s)<60)m.push('📝 '+questionPct(s)+'% em questões');return`<div class="priority-item"><b>${m.join(' • ')}</b><span>${esc(s.discipline)} — ${esc(s.topic)}</span>${lrnBadge(s.id,true)}<br><span class="actions" style="margin-top:7px"><button class="btn light" style="padding:6px 9px;font-size:12px" onclick="openSummary('${s.id}')">📄 Resumo</button><button class="btn light" style="padding:6px 9px;font-size:12px" onclick="goQuestions('${s.id}')">📝 Registrar questões</button><button class="btn light" style="padding:6px 9px;font-size:12px" onclick="focusRow(${i})">Ver assunto</button></span></div>`}).join('')+'</div>';
+ else h+='<div class="priority-grid">'+al.slice(0,8).map(s=>{const i=data.subjects.indexOf(s),m=[];if(s.classification==='fraco')m.push('🔴 Fraco');if(questionPct(s)!==null&&questionPct(s)<60)m.push('📝 '+questionPct(s)+'% em questões');return`<div class="priority-item"><b>${m.join(' • ')}</b><span>${esc(s.discipline)} — ${esc(s.topic)}</span>${lrnBadge(s.id,true)}${decBadge(s.id,true)}<br><span class="actions" style="margin-top:7px"><button class="btn light" style="padding:6px 9px;font-size:12px" onclick="openSummary('${s.id}')">📄 Resumo</button><button class="btn light" style="padding:6px 9px;font-size:12px" onclick="goQuestions('${s.id}')">📝 Registrar questões</button><button class="btn light" style="padding:6px 9px;font-size:12px" onclick="focusRow(${i})">Ver assunto</button></span></div>`}).join('')+'</div>';
  h+=goalH;document.getElementById('priorityPanel').innerHTML=h;
 }
 function renderToday(){
@@ -859,12 +934,12 @@ function renderToday(){
  const going=data.subjects.filter(s=>s.status==='estudando'&&vis.includes(s.discipline));
  h+=`<h3 class="today-title">🔵 Em andamento (${going.length})</h3>`;
  if(!going.length)h+='<div class="empty">Nenhum assunto em andamento.</div>';
- else h+='<div class="priority-grid">'+going.map(s=>{const i=data.subjects.indexOf(s);return`<div class="priority-item"><b>${esc(s.discipline)}</b><span>${esc(s.topic)}</span>${lrnBadge(s.id,true)}<br><span class="actions" style="margin-top:7px"><button class="btn light" style="padding:6px 9px;font-size:12px" onclick="openSummary('${s.id}')">📄 Resumo</button><button class="btn green" style="padding:6px 9px;font-size:12px" onclick="concludeAndOpen(${i})">✅ Concluí</button></span></div>`}).join('')+'</div>';
+ else h+='<div class="priority-grid">'+going.map(s=>{const i=data.subjects.indexOf(s);return`<div class="priority-item"><b>${esc(s.discipline)}</b><span>${esc(s.topic)}</span>${lrnBadge(s.id,true)}${decBadge(s.id,true)}<br><span class="actions" style="margin-top:7px"><button class="btn light" style="padding:6px 9px;font-size:12px" onclick="openSummary('${s.id}')">📄 Resumo</button><button class="btn green" style="padding:6px 9px;font-size:12px" onclick="concludeAndOpen(${i})">✅ Concluí</button></span></div>`}).join('')+'</div>';
  h+='<h3 class="today-title" style="margin-top:18px">➡️ Próximo assunto de cada disciplina</h3><div class="priority-grid">';
  vis.forEach(d=>{
   const pend=data.subjects.filter(s=>s.discipline===d&&s.status==='pendente'),nx=pend[0];
   const sel=`<select data-d="${esc(d)}" style="width:auto;padding:4px 6px;font-size:12px" onchange="setWeight(this.dataset.d,this.value)">${[[1,'Peso normal'],[2,'Peso alto'],[3,'Peso muito alto']].map(o=>`<option value="${o[0]}" ${w(d)===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select>`;
-  h+=`<div class="priority-item"><b>${esc(d)}</b>${sel}<br><span style="display:block;margin-top:6px">${nx?esc(nx.topic)+lrnBadge(nx.id,true):'✅ Sem assuntos pendentes'}</span>${nx?`<span class="muted">${pend.length} pendente(s) nesta disciplina</span><br><button class="btn light" style="margin-top:7px;padding:6px 9px;font-size:12px" onclick="setStatus(${data.subjects.indexOf(nx)},'estudando')">▶️ Começar a estudar</button>`:''}</div>`;
+  h+=`<div class="priority-item"><b>${esc(d)}</b>${sel}<br><span style="display:block;margin-top:6px">${nx?esc(nx.topic)+lrnBadge(nx.id,true)+decBadge(nx.id,true):'✅ Sem assuntos pendentes'}</span>${nx?`<span class="muted">${pend.length} pendente(s) nesta disciplina</span><br><button class="btn light" style="margin-top:7px;padding:6px 9px;font-size:12px" onclick="setStatus(${data.subjects.indexOf(nx)},'estudando')">▶️ Começar a estudar</button>`:''}</div>`;
  });
  el.innerHTML=h+'</div>';
 }
@@ -905,7 +980,7 @@ function renderTable(){
  if(!rows.length){document.getElementById('tableWrap').innerHTML='<div class="empty">Nenhum assunto encontrado.</div>';return}
  const rv=(s,n)=>`<label class="review-item">R${n+1} <input type="date" value="${esc(s.reviewDates[n])}" onchange="setReview(${s.i},${n},this.value)"><input type="checkbox" ${s.reviewDone[n]?'checked':''} onchange="setReviewDone(${s.i},${n},this.checked)"></label>`;
  let h='<table class="tbl-edital"><thead><tr><th>#</th><th>Disciplina</th><th>Assunto</th><th>Status</th><th>3 revisões</th><th>Classificação</th><th>Questões</th><th>Ação</th></tr></thead><tbody>';
- rows.forEach(s=>{const qp=questionPct(s);h+=`<tr id="row-${s.i}"><td>${s.i+1}</td><td data-l="Disciplina"><b>${esc(s.discipline)}</b></td><td data-l="Assunto">${esc(s.topic)}${lrnBadge(s.id,false)}${s.studyDate?`<div class="history">Estudado em ${formatDate(s.studyDate)}</div>`:''}</td><td data-l="Status"><select onchange="setStatus(${s.i},this.value)"><option value="pendente" ${s.status==='pendente'?'selected':''}>🔴 Não estudado</option><option value="estudando" ${s.status==='estudando'?'selected':''}>🔵 Estudando</option><option value="estudado" ${s.status==='estudado'?'selected':''}>🟢 Estudado</option></select></td><td data-l="Revisões"><div class="review-box">${rv(s,0)}${rv(s,1)}${rv(s,2)}</div></td><td data-l="Classificação"><select class="obs-select ${classificationClass(s.classification)}" onchange="setClassification(${s.i},this.value);this.className='obs-select '+classificationClass(this.value)"><option value="" ${!s.classification?'selected':''}>Classificação</option><option value="dominio" ${s.classification==='dominio'?'selected':''}>🟢 Domínio</option><option value="revisar" ${s.classification==='revisar'?'selected':''}>🟡 Revisar</option><option value="fraco" ${s.classification==='fraco'?'selected':''}>🔴 Fraco</option></select><input style="margin-top:4px;font-size:11px;padding:6px" value="${escAttr(s.notes)}" placeholder="Observação opcional" onchange="setNotes(${s.i},this.value)"></td><td data-l="Questões">${s.questions.total?`${s.questions.correct}/${s.questions.total}<br><b>${qp}%</b>`:'—'}</td><td data-l="Ações"><div class="actions"><button class="btn ${hasSummary(s)?'green':'light'}" onclick="openSummary('${s.id}')">📄 ${hasSummary(s)?'Ver resumo':'Resumo'}</button><button class="btn danger" onclick="removeSubject(${s.i})">🗑 Excluir</button></div></td></tr>`});
+ rows.forEach(s=>{const qp=questionPct(s);h+=`<tr id="row-${s.i}"><td>${s.i+1}</td><td data-l="Disciplina"><b>${esc(s.discipline)}</b></td><td data-l="Assunto">${esc(s.topic)}${lrnBadge(s.id,false)}${decBadge(s.id,false)}${s.studyDate?`<div class="history">Estudado em ${formatDate(s.studyDate)}</div>`:''}</td><td data-l="Status"><select onchange="setStatus(${s.i},this.value)"><option value="pendente" ${s.status==='pendente'?'selected':''}>🔴 Não estudado</option><option value="estudando" ${s.status==='estudando'?'selected':''}>🔵 Estudando</option><option value="estudado" ${s.status==='estudado'?'selected':''}>🟢 Estudado</option></select></td><td data-l="Revisões"><div class="review-box">${rv(s,0)}${rv(s,1)}${rv(s,2)}</div></td><td data-l="Classificação"><select class="obs-select ${classificationClass(s.classification)}" onchange="setClassification(${s.i},this.value);this.className='obs-select '+classificationClass(this.value)"><option value="" ${!s.classification?'selected':''}>Classificação</option><option value="dominio" ${s.classification==='dominio'?'selected':''}>🟢 Domínio</option><option value="revisar" ${s.classification==='revisar'?'selected':''}>🟡 Revisar</option><option value="fraco" ${s.classification==='fraco'?'selected':''}>🔴 Fraco</option></select><input style="margin-top:4px;font-size:11px;padding:6px" value="${escAttr(s.notes)}" placeholder="Observação opcional" onchange="setNotes(${s.i},this.value)"></td><td data-l="Questões">${s.questions.total?`${s.questions.correct}/${s.questions.total}<br><b>${qp}%</b>`:'—'}</td><td data-l="Ações"><div class="actions"><button class="btn ${hasSummary(s)?'green':'light'}" onclick="openSummary('${s.id}')">📄 ${hasSummary(s)?'Ver resumo':'Resumo'}</button><button class="btn danger" onclick="removeSubject(${s.i})">🗑 Excluir</button></div></td></tr>`});
  document.getElementById('tableWrap').innerHTML=h+'</tbody></table>';
 }
 
@@ -1449,7 +1524,98 @@ function toggleFmt(){document.getElementById('sumModal').classList.toggle('fmtop
  if(window.visualViewport){visualViewport.addEventListener('resize',fitModal);visualViewport.addEventListener('scroll',fitModal)}
  window.addEventListener('orientationchange',()=>setTimeout(fitModal,300));
 })();
+
+/* ===== DECORAR: mural de post-its ===== */
+const DC_COLORS=['#fff59d','#ffcc80','#f8bbd0','#b3e5fc','#c8e6c9','#e1bee7','#ffe0b2','#d7ccc8'],DC_DAILY=10;
+let dcEditing=null,dcDraft='',dcScope='',dcStatus='',dcDrag=null;const dcClosed=new Set();
+function dcCmp(a,b){return((+b.pin)-(+a.pin))||(a.o-b.o)}
+function dcNotes(sid){return data.notes.filter(n=>n.sid===sid).sort(dcCmp)}
+function dcCount(id){return data.notes.filter(n=>n.sid===id).length}
+function decBadge(id,always){
+ const n=dcCount(id);
+ if(n)return `<button type="button" class="lrn-badge dec on" title="${n} post-it(s) no Decorar. Clique para abrir" onclick="event.stopPropagation();goDecorar('${id}')">🗒️ ${n}</button>`;
+ return always?`<button type="button" class="lrn-badge dec" title="Criar post-its deste assunto no Decorar" onclick="event.stopPropagation();goDecorar('${id}')">🗒️＋</button>`:'';
+}
+function dcAdd(){
+ const sid=document.getElementById('dcSubject').value,box=document.getElementById('dcBulk');
+ if(!byId(sid)){alert('Escolha um assunto. Se a lista estiver vazia, cadastre o edital primeiro.');return}
+ const raw=box.value.replace(/\r/g,'');if(!raw.trim()){alert('Escreva ou cole os post-its primeiro.');return}
+ const sep=/^[ \t]*---[ \t]*$/m;
+ const parts=(sep.test(raw)?raw.split(/^[ \t]*---[ \t]*$/m):raw.split('\n')).map(x=>x.trim()).filter(Boolean);
+ if(data.notes.length+parts.length>3000){alert('Limite de 3000 post-its por edital.');return}
+ let o=data.notes.filter(n=>n.sid===sid).reduce((m,n)=>Math.max(m,n.o),-10)+10;
+ parts.forEach(t=>{data.notes.push({id:newId(),sid,t:t.slice(0,100000),c:Math.floor(Math.random()*DC_COLORS.length),rot:Math.round((Math.random()*6-3)*10)/10,st:0,pin:false,o:o});o+=10});
+ box.value='';dcScope=sid;dcStatus='';dcClosed.delete(byId(sid).discipline);save();toast('🗒️ '+parts.length+' post-it(s) colado(s) no mural.');
+}
+function dcFind(id){return data.notes.find(n=>n.id===id)}
+function dcSet(id,v){const n=dcFind(id);if(!n)return;n.st=n.st===v?0:v;save()}
+function dcPin(id){const n=dcFind(id);if(!n)return;n.pin=!n.pin;save()}
+function dcEdit(id){const n=dcFind(id);if(!n)return;dcEditing=id;dcDraft=n.t;renderDecorar();const b=document.getElementById('dcEditBox');if(b)b.focus()}
+function dcSaveEdit(id){const n=dcFind(id),v=dcDraft.trim();if(!n)return;if(!v){alert('O post-it não pode ficar vazio.');return}n.t=v.slice(0,100000);dcEditing=null;save()}
+function dcCancel(){dcEditing=null;renderDecorar()}
+function dcDel(id){if(!confirm('Excluir este post-it?'))return;data.notes=data.notes.filter(n=>n.id!==id);data.dcDaily.ids=data.dcDaily.ids.filter(x=>x!==id);save()}
+function dcMove(id,dir){
+ const n=dcFind(id);if(!n)return;const l=dcNotes(n.sid).filter(x=>!!x.pin===!!n.pin),i=l.findIndex(x=>x.id===id),j=i+dir;
+ if(j<0||j>=l.length)return;[l[i],l[j]]=[l[j],l[i]];l.forEach((x,k)=>{x.o=k*10});save();
+}
+function dcDragStart(e,id){dcDrag=id;e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain',id)}catch(x){}}
+function dcDragOver(e,id){if(dcDrag&&dcDrag!==id)e.preventDefault()}
+function dcDrop(e,id){
+ e.preventDefault();const a=dcFind(dcDrag),b=dcFind(id);dcDrag=null;
+ if(!a||!b||a.id===b.id||a.sid!==b.sid||!!a.pin!==!!b.pin)return;
+ const l=dcNotes(a.sid).filter(x=>!!x.pin===!!a.pin&&x.id!==a.id);l.splice(l.findIndex(x=>x.id===b.id),0,a);l.forEach((x,k)=>{x.o=k*10});save();
+}
+function dcToggle(el){if(el.open)dcClosed.delete(el.dataset.d);else dcClosed.add(el.dataset.d)}
+function dcDraw(){
+ const g=f=>shuffle(data.notes.filter(f));
+ const order=[...g(n=>n.pin&&n.st!==1),...g(n=>!n.pin&&n.st===2),...g(n=>!n.pin&&n.st===0),...g(n=>n.st===1)];
+ data.dcDaily={date:today(),ids:order.slice(0,DC_DAILY).map(n=>n.id)};
+}
+function dcDailyNew(){if(!data.notes.length){toast('Cole alguns post-its primeiro.',true);return}dcDraw();save()}
+function dcNoteHtml(n,daily){
+ const edit=dcEditing===n.id,sj=byId(n.sid);
+ const drag=(!daily&&!edit)?` draggable="true" ondragstart="dcDragStart(event,'${n.id}')" ondragover="dcDragOver(event,'${n.id}')" ondrop="dcDrop(event,'${n.id}')"`:'';
+ const body=edit
+  ?`<textarea class="dc-edit" id="dcEditBox" oninput="dcDraft=this.value">${esc(dcDraft)}</textarea><div class="dc-act"><button onclick="dcSaveEdit('${n.id}')">💾 Salvar</button><button onclick="dcCancel()">Cancelar</button></div>`
+  :`${daily&&sj?`<div class="dc-from">${esc(sj.topic)}</div>`:''}<div class="dc-text">${esc(n.t)}</div><div class="dc-act"><button class="${n.st===1?'on':''}" onclick="dcSet('${n.id}',1)" title="Decorei">✅</button><button class="${n.st===2?'on':''}" onclick="dcSet('${n.id}',2)" title="Ainda erro">❌</button><button class="${n.pin?'on':''}" onclick="dcPin('${n.id}')" title="Fixar no topo">📌</button>${daily?'':`<button onclick="dcEdit('${n.id}')" title="Editar">✏️</button><button class="dc-mv" onclick="dcMove('${n.id}',-1)">◀</button><button class="dc-mv" onclick="dcMove('${n.id}',1)">▶</button>`}<button onclick="dcDel('${n.id}')" title="Excluir">🗑</button></div>`;
+ return `<div class="dc-note s${n.st}${n.pin?' pin':''}" style="--nc:${DC_COLORS[n.c%DC_COLORS.length]};--rot:${n.rot}deg"${drag}>${body}</div>`;
+}
+function renderDecorar(){
+ const wall=document.getElementById('dcWall');if(!wall)return;
+ const sel=document.getElementById('dcSubject'),cur=sel.value;
+ sel.innerHTML=[...lrnGroups(data.subjects)].map(([d,l])=>`<optgroup label="${esc(d)}">`+l.map(x=>`<option value="${esc(x.id)}">${esc(x.topic)}</option>`).join('')+'</optgroup>').join('');
+ if(cur&&byId(cur))sel.value=cur;
+ const fs=document.getElementById('dcScope'),sids=[...new Set(data.notes.map(n=>n.sid))].filter(byId);
+ fs.innerHTML='<option value="">Todas as matérias</option>'+[...lrnGroups(sids.map(byId))].map(([d,l])=>`<optgroup label="${esc(d)}"><option value="d:${esc(d)}">📚 Toda a matéria: ${esc(d)}</option>`+l.map(x=>`<option value="${esc(x.id)}">${esc(x.topic)}</option>`).join('')+'</optgroup>').join('');
+ if(![...fs.options].some(o=>o.value===dcScope))dcScope='';
+ fs.value=dcScope;document.getElementById('dcStatus').value=dcStatus;
+ const N=data.notes.length,d1=data.notes.filter(n=>n.st===1).length,d2=data.notes.filter(n=>n.st===2).length;
+ document.getElementById('dcStats').innerHTML=N?`<b>${N}</b> post-it(s) • ✅ <b>${d1}</b> decorei • ❌ <b>${d2}</b> ainda erro • 🆕 <b>${N-d1-d2}</b> novo(s)`:'Nenhum post-it ainda. Cole o primeiro acima!';
+ // mural do dia (sorteia sozinho uma vez por dia)
+ let dn=data.dcDaily.ids.map(dcFind).filter(Boolean);
+ if(N&&(data.dcDaily.date!==today()||!dn.length)){dcDraw();persist();dn=data.dcDaily.ids.map(dcFind).filter(Boolean)}
+ document.getElementById('dcDaily').innerHTML=dn.length?'<div class="dc-board">'+dn.map(n=>dcNoteHtml(n,true)).join('')+'</div>':'<div class="empty">Cole post-its para montar o mural do dia.</div>';
+ // mural completo
+ const list=data.notes.filter(n=>{const sj=byId(n.sid);return sj&&(!dcScope||(dcScope.startsWith('d:')?sj.discipline===dcScope.slice(2):n.sid===dcScope))&&(dcStatus===''||String(n.st)===dcStatus)});
+ if(!list.length){wall.innerHTML='<div class="empty">Nenhum post-it para mostrar.</div>';return}
+ const bySid=new Map();list.forEach(n=>{if(!bySid.has(n.sid))bySid.set(n.sid,[]);bySid.get(n.sid).push(n)});
+ const ord=[...bySid.keys()].sort((a,b)=>data.subjects.indexOf(byId(a))-data.subjects.indexOf(byId(b))),byDisc=new Map();
+ ord.forEach(id=>{const d=byId(id).discipline;if(!byDisc.has(d))byDisc.set(d,[]);byDisc.get(d).push(id)});
+ wall.innerHTML=[...byDisc].map(([d,ids])=>`<details class="sum-disc" data-d="${esc(d)}" ${dcClosed.has(d)?'':'open'} ontoggle="dcToggle(this)"><summary>${esc(d)} <span class="muted">(${ids.reduce((a,i)=>a+bySid.get(i).length,0)} post-it(s))</span></summary>`+
+  ids.map(id=>{const ns=bySid.get(id).slice().sort(dcCmp);return `<div id="dc-${id}" style="margin-bottom:20px"><b>${esc(byId(id).topic)}</b> <span class="muted">${ns.filter(n=>n.st===1).length}/${ns.length} decorado(s)</span><div class="dc-board" style="margin-top:8px">${ns.map(n=>dcNoteHtml(n,false)).join('')}</div></div>`}).join('')+'</details>').join('');
+}
+function goDecorar(id){
+ const sj=byId(id);if(!sj)return;
+ if(window.openGpsTab)window.openGpsTab('gps-tab-decorar');
+ const has=dcCount(id)>0;dcStatus='';dcScope=has?id:'';dcClosed.delete(sj.discipline);
+ renderDecorar();document.getElementById('dcSubject').value=id;
+ setTimeout(()=>{
+  if(has){const c=document.getElementById('dc-'+id);if(c)c.scrollIntoView({behavior:'smooth',block:'center'})}
+  else{const b=document.getElementById('dcBulk');if(b){b.scrollIntoView({behavior:'smooth',block:'center'});b.focus()}toast('🗒️ Cole os post-its de "'+sj.topic+'" e adicione ao mural.')}
+ },350);
+}
 function lrnExit(){learnState=null;render()}
+['appVersion','appVersionLogin'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='Versão do sistema: '+APP_VERSION});
 render();
 </script>
 </body>
